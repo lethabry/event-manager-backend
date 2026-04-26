@@ -67,8 +67,14 @@ public class EventService : IEventService
         return existing;
     }
 
-    public bool DeleteEvent(Guid id)
+    public void DeleteEvent(Guid id)
     {
-        return _repository.DeleteEvent(id);
+        var existing = _repository.GetEventById(id);
+        if (existing == null)
+        {
+            throw new KeyNotFoundException($"Мероприятие с id {id} не найдено");
+        }
+
+        _repository.DeleteEvent(id);
     }
 }

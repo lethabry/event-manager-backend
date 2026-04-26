@@ -1,26 +1,32 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace EventManager.Models;
 
 public class Event
 {
-    public Guid Id;
-    public string Title;
-    public string? Description;
-    public DateTime StartAt;
-    public DateTime EndAt;
+    public Guid Id { get; init; }
+    public string Title { get; set; }
+    public string? Description { get; set; }
+    public DateTime StartAt { get; set; }
+    public DateTime EndAt { get; set; }
 }
 
 public class EventDTO
 {
+    [JsonRequired]
     [Required(ErrorMessage = "Название мероприятия обязательно к заполнению")]
-    public string Title;
+    public string Title { get; set; }
 
-    public string? Description;
+    public string? Description { get; set; }
 
-    [Required(ErrorMessage = "Дата и время начала мероприятия обязательно к заполнению")] [DataType(DataType.Date)]
-    public DateTime StartAt;
+    [JsonRequired]
+    [Required(ErrorMessage = "Дата и время начала мероприятия обязательно к заполнению")]
+    [DataType(DataType.DateTime)]
+    public DateTime StartAt { get; set; }
 
-    [Required(ErrorMessage = "Дата и время окончания мероприятия обязательно к заполнению")] [DataType(DataType.Date)]
-    public DateTime EndAt;
+    [JsonRequired]
+    [Required(ErrorMessage = "Дата и время окончания мероприятия обязательно к заполнению")]
+    [DataType(DataType.DateTime)]
+    public DateTime EndAt { get; set; }
 }

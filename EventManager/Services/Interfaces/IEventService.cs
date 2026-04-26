@@ -8,5 +8,5 @@ public interface IEventService
     Event? GetEventById(Guid id);
     Event CreateEvent(EventDTO newEvent);
     Event UpdateEvent(Guid id, EventDTO updatedEvent);
-    bool DeleteEvent(Guid id);
+    void DeleteEvent(Guid id);
 }
