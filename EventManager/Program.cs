@@ -1,8 +1,8 @@
 using System.Reflection;
 using EventManager.Data;
 using EventManager.Middleware;
-using EventManager.Services;
-using EventManager.Services.Interfaces;
+using EventManager.Services.EventService;
+using EventManager.Services.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +15,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddSingleton<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IValidationService, ValidationService>();
 builder.Services.AddScoped<IEventService, EventService>();
 
 if (builder.Environment.IsDevelopment())

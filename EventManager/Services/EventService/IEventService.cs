@@ -1,6 +1,6 @@
 using EventManager.Models;
 
-namespace EventManager.Services.Interfaces;
+namespace EventManager.Services.EventService;
 
 public interface IEventService
 {

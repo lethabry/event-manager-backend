@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using EventManager.Models;
-using EventManager.Services.Interfaces;
 
 namespace EventManager.Data;
 
@@ -71,20 +70,17 @@ public class EventRepository : IEventRepository
         return _events.TryAdd(updatedEvent.Id, updatedEvent) ? updatedEvent : null;
     }
 
-    public Event? UpdateEvent(Guid id, EventDTO updatedEvent)
+    public Event? UpdateEvent(Guid id, EventDTO eventDto)
     {
-        if (!_events.TryGetValue(id, out var oldEvent)) return null;
-
-        var newEvent = new Event()
+        var updatedEvent = _events.AddOrUpdate(key: id, addValueFactory: _ => null, (key, oldValue) => new Event()
         {
-            Id = oldEvent.Id,
-            Title = updatedEvent.Title,
-            Description = string.IsNullOrEmpty(updatedEvent.Description) ? null : updatedEvent.Description,
-            StartAt = updatedEvent.StartAt,
-            EndAt = updatedEvent.EndAt,
-        };
-
-        return _events.TryUpdate(id, newEvent, oldEvent) ? newEvent : null;
+            Id = oldValue.Id,
+            Title = eventDto.Title,
+            Description = string.IsNullOrEmpty(eventDto.Description) ? null : eventDto.Description,
+            StartAt = eventDto.StartAt,
+            EndAt = eventDto.EndAt,
+        });
+        return updatedEvent;
     }
 
     public bool DeleteEvent(Guid id)

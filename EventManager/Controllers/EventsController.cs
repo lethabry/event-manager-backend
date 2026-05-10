@@ -1,5 +1,5 @@
 using EventManager.Models;
-using EventManager.Services.Interfaces;
+using EventManager.Services.EventService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventManager.Controllers;
