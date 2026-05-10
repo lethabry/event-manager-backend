@@ -17,9 +17,9 @@ public class EventService : IEventService
         _validation = validation;
     }
 
-    public IReadOnlyCollection<Event> GetEvents()
+    public IReadOnlyCollection<Event> GetEvents(string? title, DateTime? from, DateTime? to)
     {
-        return _repository.GetEvents();
+        return _repository.GetEvents(title, from, to);
     }
 
     public Event GetEventById(Guid id)

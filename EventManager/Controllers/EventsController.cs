@@ -1,3 +1,5 @@
+using System.Net;
+using EventManager.Exceptions;
 using EventManager.Models;
 using EventManager.Services.EventService;
 using Microsoft.AspNetCore.Mvc;
@@ -18,12 +20,22 @@ public class EventsController : ControllerBase
     /// <summary>
     /// Метод для получения всех мероприятий
     /// </summary>
+    /// <param name="title">Фильтрация по названию</param>>
+    /// <param name="from">Фильтрация от конкретной даты мероприятия</param>>
+    /// <param name="to">Фильтрация до конкретной даты мероприятия</param>>
     [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
     [Produces("application/json")]
     [HttpGet]
-    public IActionResult GetAll()
+    public IActionResult GetAll([FromQuery] string? title, DateTime? from, DateTime? to)
     {
-        var events = _eventService.GetEvents();
+        if (from.HasValue && to.HasValue && from <= to.Value)
+        {
+            throw new EventException(
+                HttpStatusCode.BadRequest,
+                "Дата начала мероприятия должны быть раньше даты окончания мероприятия");
+        }
+
+        var events = _eventService.GetEvents(title, from, to);
         return Ok(events);
     }
 

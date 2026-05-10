@@ -47,9 +47,25 @@ public class EventRepository : IEventRepository
         _events = new ConcurrentDictionary<Guid, Event>(eventList.ToDictionary((e) => e.Id, (e) => e));
     }
 
-    public IReadOnlyCollection<Event> GetEvents()
+    public IReadOnlyCollection<Event> GetEvents(string? title, DateTime? from, DateTime? to)
     {
-        return _events.Values.ToList().AsReadOnly();
+        IEnumerable<Event> result = _events.Values.ToList();
+        if (!string.IsNullOrEmpty(title))
+        {
+            result = result.Where((evt) => evt.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (from.HasValue)
+        {
+            result = result.Where((evt) => evt.StartAt >= from.Value);
+        }
+
+        if (to.HasValue)
+        {
+            result = result.Where((evt) => evt.EndAt <= to.Value);
+        }
+
+        return result.ToList().AsReadOnly();
     }
 
     public Event? GetEventById(Guid id)
