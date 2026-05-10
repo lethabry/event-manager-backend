@@ -23,19 +23,15 @@ public class EventsController : ControllerBase
     /// <param name="title">Фильтрация по названию</param>>
     /// <param name="from">Фильтрация от конкретной даты мероприятия</param>>
     /// <param name="to">Фильтрация до конкретной даты мероприятия</param>>
+    /// <param name="page">Номер страницы</param>>
+    /// <param name="to">Количество элементов в странице</param>>
     [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
     [Produces("application/json")]
     [HttpGet]
-    public IActionResult GetAll([FromQuery] string? title, DateTime? from, DateTime? to)
+    public IActionResult GetAll([FromQuery] string? title, DateTime? from, DateTime? to, int page = 1,
+        int pageSize = 10)
     {
-        if (from.HasValue && to.HasValue && from <= to.Value)
-        {
-            throw new EventException(
-                HttpStatusCode.BadRequest,
-                "Дата начала мероприятия должны быть раньше даты окончания мероприятия");
-        }
-
-        var events = _eventService.GetEvents(title, from, to);
+        var events = _eventService.GetEvents(title, from, to, page, pageSize);
         return Ok(events);
     }
 

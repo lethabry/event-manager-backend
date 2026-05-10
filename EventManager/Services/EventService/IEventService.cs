@@ -4,7 +4,7 @@ namespace EventManager.Services.EventService;
 
 public interface IEventService
 {
-    IReadOnlyCollection<Event> GetEvents(string? title, DateTime? from, DateTime? to);
+    PaginatedResultDTO<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize);
     Event? GetEventById(Guid id);
     Event CreateEvent(EventDTO newEvent);
     Event UpdateEvent(Guid id, EventDTO updatedEvent);

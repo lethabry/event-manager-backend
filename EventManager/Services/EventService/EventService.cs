@@ -17,9 +17,34 @@ public class EventService : IEventService
         _validation = validation;
     }
 
-    public IReadOnlyCollection<Event> GetEvents(string? title, DateTime? from, DateTime? to)
+    public PaginatedResultDTO<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize)
     {
-        return _repository.GetEvents(title, from, to);
+        if (from.HasValue && to.HasValue && from <= to.Value)
+        {
+            throw new EventException(
+                HttpStatusCode.BadRequest,
+                "Дата начала мероприятия должны быть раньше даты окончания мероприятия");
+        }
+
+        if (page <= 0)
+        {
+            throw new EventException(HttpStatusCode.BadRequest, "Номер страницы не может быть меньше 1");
+        }
+
+        if (pageSize <= 0)
+        {
+            throw new EventException(HttpStatusCode.BadRequest, "Количество элементов не может быть меньше 1");
+        }
+
+        var events = _repository.GetEvents(title, from, to);
+        var paginatedEvents = new PaginatedResultDTO<Event>()
+        {
+            currentPage = page,
+            currentPageSize = pageSize,
+            result = events.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
+            totalAmount = events.Count
+        };
+        return paginatedEvents;
     }
 
     public Event GetEventById(Guid id)
