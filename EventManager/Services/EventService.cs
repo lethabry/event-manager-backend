@@ -12,7 +12,7 @@ public class EventService : IEventService
         _repository = repository;
     }
 
-    public List<Event> GetEvents()
+    public IReadOnlyCollection<Event> GetEvents()
     {
         return _repository.GetEvents();
     }

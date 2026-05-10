@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using EventManager.Models;
 using EventManager.Services.Interfaces;
 
@@ -5,11 +6,11 @@ namespace EventManager.Data;
 
 public class EventRepository : IEventRepository
 {
-    private readonly List<Event> _events;
+    private readonly ConcurrentDictionary<Guid, Event> _events;
 
     public EventRepository()
     {
-        _events = new()
+        var eventList = new[]
         {
             new Event
             {
@@ -44,19 +45,20 @@ public class EventRepository : IEventRepository
                 EndAt = new DateTime(2026, 5, 14, 23, 0, 0)
             }
         };
+        _events = new ConcurrentDictionary<Guid, Event>(eventList.ToDictionary((e) => e.Id, (e) => e));
     }
 
-    public List<Event> GetEvents()
+    public IReadOnlyCollection<Event> GetEvents()
     {
-        return _events.ToList();
+        return _events.Values.ToList().AsReadOnly();
     }
 
     public Event? GetEventById(Guid id)
     {
-        return _events.FirstOrDefault(e => e.Id == id);
+        return _events.TryGetValue(id, out var value) ? value : null;
     }
 
-    public Event CreateEvent(EventDTO newEvent)
+    public Event? CreateEvent(EventDTO newEvent)
     {
         var updatedEvent = new Event
         {
@@ -66,28 +68,27 @@ public class EventRepository : IEventRepository
             StartAt = newEvent.StartAt,
             EndAt = newEvent.EndAt,
         };
-        _events.Add(updatedEvent);
-        return updatedEvent;
+        return _events.TryAdd(updatedEvent.Id, updatedEvent) ? updatedEvent : null;
     }
 
     public Event? UpdateEvent(Guid id, EventDTO updatedEvent)
     {
-        var existingEvent = _events.FirstOrDefault(e => e.Id == id);
-        if (existingEvent != null)
-        {
-            existingEvent.Title = updatedEvent.Title;
-            existingEvent.Description =
-                string.IsNullOrEmpty(updatedEvent.Description) ? null : updatedEvent.Description;
-            existingEvent.StartAt = updatedEvent.StartAt;
-            existingEvent.EndAt = updatedEvent.EndAt;
-            return existingEvent;
-        }
+        if (!_events.TryGetValue(id, out var oldEvent)) return null;
 
-        return null;
+        var newEvent = new Event()
+        {
+            Id = oldEvent.Id,
+            Title = updatedEvent.Title,
+            Description = string.IsNullOrEmpty(updatedEvent.Description) ? null : updatedEvent.Description,
+            StartAt = updatedEvent.StartAt,
+            EndAt = updatedEvent.EndAt,
+        };
+
+        return _events.TryUpdate(id, newEvent, oldEvent) ? newEvent : null;
     }
 
     public bool DeleteEvent(Guid id)
     {
-        return _events.RemoveAll((e) => e.Id == id) > 0;
+        return _events.TryRemove(id, out _);
     }
 }
