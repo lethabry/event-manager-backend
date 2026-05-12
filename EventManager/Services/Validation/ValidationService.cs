@@ -30,7 +30,5 @@ public class ValidationService : IValidationService
                 "Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия"
             );
         }
-        
-        
     }
 }

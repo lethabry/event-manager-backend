@@ -16,9 +16,8 @@ public class EventServiceTests
     private readonly Mock<IValidationService> _mockValidationService;
     private readonly IEventService _eventService;
     private List<Event> _events;
-    private readonly ITestOutputHelper _output;
 
-    public EventServiceTests(ITestOutputHelper output)
+    public EventServiceTests()
     {
         _events =
         [
@@ -59,7 +58,6 @@ public class EventServiceTests
         _mockEventRepository = new Mock<IEventRepository>();
         _mockValidationService = new Mock<IValidationService>();
         _eventService = new EventService(_mockEventRepository.Object, _mockValidationService.Object);
-        _output = output;
     }
 
     public static IEnumerable<object[]> DatesTestData()
@@ -95,7 +93,8 @@ public class EventServiceTests
     public void GetEvents_NoFilters_ShouldReturnAllPaginatedEvents()
     {
         //Arrange
-        _mockEventRepository.Setup((rep) => rep.GetEvents(null, null, null)).Returns(_events);
+        _mockEventRepository.Setup((rep) => rep.GetEvents(null, null, null))
+                            .Returns(_events);
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = 1,
@@ -108,7 +107,8 @@ public class EventServiceTests
         var result = _eventService.GetEvents(null, null, null, 1, 10);
 
         //Assert
-        result.Should().BeEquivalentTo(paginatedResult);
+        result.Should()
+              .BeEquivalentTo(paginatedResult);
     }
 
     [Theory]
@@ -120,8 +120,9 @@ public class EventServiceTests
     {
         //Arrange
         var evt = _events.Where((e) => e.Title.Contains(titleValue, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, null, null)).Returns(evt);
+                         .ToList();
+        _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, null, null))
+                            .Returns(evt);
 
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
@@ -135,7 +136,8 @@ public class EventServiceTests
         var result = _eventService.GetEvents(titleValue, null, null, 1, 10);
 
         //Assert
-        result.Should().BeEquivalentTo(paginatedResult);
+        result.Should()
+              .BeEquivalentTo(paginatedResult);
     }
 
     [Theory]
@@ -147,8 +149,9 @@ public class EventServiceTests
     {
         //Arrange
         var evt = _events.Where((e) => e.Title.Contains(titleValue, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, null, null)).Returns(evt);
+                         .ToList();
+        _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, null, null))
+                            .Returns(evt);
 
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
@@ -162,7 +165,8 @@ public class EventServiceTests
         var result = _eventService.GetEvents(titleValue, null, null, 1, 10);
 
         //Assert
-        result.Should().BeEquivalentTo(paginatedResult);
+        result.Should()
+              .BeEquivalentTo(paginatedResult);
     }
 
     [Theory]
@@ -172,8 +176,9 @@ public class EventServiceTests
     {
         //Arrange
         var evts = _events.Where((e) => e.StartAt >= fromDate && e.EndAt <= toDate)
-            .ToList();
-        _mockEventRepository.Setup((rep) => rep.GetEvents(null, fromDate, toDate)).Returns(evts);
+                          .ToList();
+        _mockEventRepository.Setup((rep) => rep.GetEvents(null, fromDate, toDate))
+                            .Returns(evts);
 
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
@@ -187,7 +192,8 @@ public class EventServiceTests
         var result = _eventService.GetEvents(null, fromDate, toDate, 1, 10);
 
         //Assert
-        result.Should().BeEquivalentTo(paginatedResult);
+        result.Should()
+              .BeEquivalentTo(paginatedResult);
     }
 
     [Theory]
@@ -197,10 +203,11 @@ public class EventServiceTests
     {
         //Arrange
         var evts = _events.Where((e) =>
-                e.StartAt >= fromDate && e.EndAt <= toDate &&
-                e.Title.Contains(titleValue, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, fromDate, toDate)).Returns(evts);
+                              e.StartAt >= fromDate && e.EndAt <= toDate &&
+                              e.Title.Contains(titleValue, StringComparison.OrdinalIgnoreCase))
+                          .ToList();
+        _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, fromDate, toDate))
+                            .Returns(evts);
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = 1,
@@ -213,7 +220,8 @@ public class EventServiceTests
         var result = _eventService.GetEvents(titleValue, fromDate, toDate, 1, 10);
 
         //Assert
-        result.Should().BeEquivalentTo(paginatedResult);
+        result.Should()
+              .BeEquivalentTo(paginatedResult);
     }
 
     [Theory]
@@ -224,8 +232,11 @@ public class EventServiceTests
     public void GetEvent_CustomPaginationWithoutFilters_ShouldReturnMatchingEvents(int page, int pageSize)
     {
         //Arrange
-        var evts = _events.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-        _mockEventRepository.Setup((rep) => rep.GetEvents(null, null, null)).Returns(_events);
+        var evts = _events.Skip((page - 1) * pageSize)
+                          .Take(pageSize)
+                          .ToList();
+        _mockEventRepository.Setup((rep) => rep.GetEvents(null, null, null))
+                            .Returns(_events);
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = page,
@@ -238,7 +249,8 @@ public class EventServiceTests
         var result = _eventService.GetEvents(null, null, null, page, pageSize);
 
         //Assert
-        result.Should().BeEquivalentTo(paginatedResult);
+        result.Should()
+              .BeEquivalentTo(paginatedResult);
     }
 
     [Theory]
@@ -249,14 +261,18 @@ public class EventServiceTests
     {
         //Arrange
         var evts = _events.Where((e) =>
-            e.StartAt >= fromDate && e.EndAt <= toDate &&
-            e.Title.Contains(titleValue, StringComparison.OrdinalIgnoreCase)).ToList();
-        _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, fromDate, toDate)).Returns(evts);
+                              e.StartAt >= fromDate && e.EndAt <= toDate &&
+                              e.Title.Contains(titleValue, StringComparison.OrdinalIgnoreCase))
+                          .ToList();
+        _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, fromDate, toDate))
+                            .Returns(evts);
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = page,
             currentPageSize = pageSize,
-            result = evts.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
+            result = evts.Skip((page - 1) * pageSize)
+                         .Take(pageSize)
+                         .ToList(),
             totalAmount = evts.Count()
         };
 
@@ -264,7 +280,8 @@ public class EventServiceTests
         var result = _eventService.GetEvents(titleValue, fromDate, toDate, page, pageSize);
 
         //Assert
-        result.Should().BeEquivalentTo(paginatedResult);
+        result.Should()
+              .BeEquivalentTo(paginatedResult);
     }
 
     [Fact]
@@ -279,9 +296,10 @@ public class EventServiceTests
         var result = () => _eventService.GetEvents(null, fromDate, toDate, 1, 10);
 
         //Assert
-        result.Should().Throw<EventException>()
-            .WithMessage("Дата начала мероприятия должны быть раньше даты окончания мероприятия")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Дата начала мероприятия должны быть раньше даты окончания мероприятия")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.GetEvents(null, null, null), Times.Never);
     }
 
@@ -295,9 +313,10 @@ public class EventServiceTests
         var result = () => _eventService.GetEvents(null, null, null, page, 10);
 
         //Assert
-        result.Should().Throw<EventException>()
-            .WithMessage("Номер страницы не может быть меньше 1")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Номер страницы не может быть меньше 1")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.GetEvents(null, null, null), Times.Never);
     }
 
@@ -311,9 +330,10 @@ public class EventServiceTests
         var result = () => _eventService.GetEvents(null, null, null, 1, pageSize);
 
         //Assert
-        result.Should().Throw<EventException>()
-            .WithMessage("Количество элементов не может быть меньше 1")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Количество элементов не может быть меньше 1")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.GetEvents(null, null, null), Times.Never);
     }
 
@@ -323,13 +343,15 @@ public class EventServiceTests
     {
         //Arrange
         var evt = _events.First();
-        _mockEventRepository.Setup((rep) => rep.GetEventById(evt.Id)).Returns(evt);
+        _mockEventRepository.Setup((rep) => rep.GetEventById(evt.Id))
+                            .Returns(evt);
 
         //Act
         var result = _eventService.GetEventById(evt.Id);
 
         //Assert
-        result.Should().BeEquivalentTo(evt);
+        result.Should()
+              .BeEquivalentTo(evt);
         _mockEventRepository.Verify(x => x.GetEventById(evt.Id), Times.Once);
     }
 
@@ -344,9 +366,10 @@ public class EventServiceTests
         var result = () => _eventService.GetEventById(randomId);
 
         //Assert
-        result.Should().Throw<EventException>()
-            .WithMessage($"Мероприятие с id {randomId} не найдено")
-            .Where(e => e.statusCode == HttpStatusCode.NotFound);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage($"Мероприятие с id {randomId} не найдено")
+              .Where(e => e.statusCode == HttpStatusCode.NotFound);
         _mockEventRepository.Verify(x => x.GetEventById(randomId), Times.Once);
     }
 
@@ -372,13 +395,15 @@ public class EventServiceTests
             EndAt = evnt.EndAt,
         };
 
-        _mockEventRepository.Setup((rep) => rep.CreateEvent(evnt)).Returns(createdEvent);
+        _mockEventRepository.Setup((rep) => rep.CreateEvent(evnt))
+                            .Returns(createdEvent);
 
         //Act
         var result = _eventService.CreateEvent(evnt);
 
         //Assert
-        result.Should().BeEquivalentTo(createdEvent);
+        result.Should()
+              .BeEquivalentTo(createdEvent);
         _mockEventRepository.Verify(x => x.CreateEvent(evnt), Times.Once);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -403,13 +428,15 @@ public class EventServiceTests
             EndAt = evnt.EndAt,
         };
 
-        _mockEventRepository.Setup((rep) => rep.CreateEvent(evnt)).Returns(createdEvent);
+        _mockEventRepository.Setup((rep) => rep.CreateEvent(evnt))
+                            .Returns(createdEvent);
 
         //Act
         var result = _eventService.CreateEvent(evnt);
 
         //Assert
-        result.Should().BeEquivalentTo(createdEvent);
+        result.Should()
+              .BeEquivalentTo(createdEvent);
         _mockEventRepository.Verify(x => x.CreateEvent(evnt), Times.Once);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -425,15 +452,19 @@ public class EventServiceTests
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddHours(2),
         };
-        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt)).Throws(() =>
-            new EventException(HttpStatusCode.BadRequest, "Название мероприятия не может быть пустым"));
+        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
+                              .Throws(() =>
+                                  new EventException(HttpStatusCode.BadRequest,
+                                      "Название мероприятия не может быть пустым"));
 
         //Act
         var result = () => _eventService.CreateEvent(evnt);
 
         //Assert
-        result.Should().Throw<EventException>().WithMessage("Название мероприятия не может быть пустым")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Название мероприятия не может быть пустым")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.CreateEvent(evnt), Times.Never);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -449,15 +480,19 @@ public class EventServiceTests
             StartAt = DateTime.MinValue,
             EndAt = DateTime.Now.AddHours(2),
         };
-        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt)).Throws(
-            new EventException(HttpStatusCode.BadRequest, "Дата начала мероприятия должна быть заполнена"));
+        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
+                              .Throws(
+                                  new EventException(HttpStatusCode.BadRequest,
+                                      "Дата начала мероприятия должна быть заполнена"));
 
         //Act
         var result = () => _eventService.CreateEvent(evnt);
 
         //Assert
-        result.Should().Throw<EventException>().WithMessage("Дата начала мероприятия должна быть заполнена")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Дата начала мероприятия должна быть заполнена")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.CreateEvent(evnt), Times.Never);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -473,15 +508,19 @@ public class EventServiceTests
             StartAt = DateTime.Now,
             EndAt = DateTime.MinValue,
         };
-        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt)).Throws(
-            new EventException(HttpStatusCode.BadRequest, "Дата конца мероприятия должна быть заполнена"));
+        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
+                              .Throws(
+                                  new EventException(HttpStatusCode.BadRequest,
+                                      "Дата конца мероприятия должна быть заполнена"));
 
         //Act
         var result = () => _eventService.CreateEvent(evnt);
 
         //Assert
-        result.Should().Throw<EventException>().WithMessage("Дата конца мероприятия должна быть заполнена")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Дата конца мероприятия должна быть заполнена")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.CreateEvent(evnt), Times.Never);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -497,17 +536,19 @@ public class EventServiceTests
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddHours(-1),
         };
-        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt)).Throws(
-            new EventException(HttpStatusCode.BadRequest,
-                "Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия"));
+        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
+                              .Throws(
+                                  new EventException(HttpStatusCode.BadRequest,
+                                      "Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия"));
 
         //Act
         var result = () => _eventService.CreateEvent(evnt);
 
         //Assert
-        result.Should().Throw<EventException>()
-            .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.CreateEvent(evnt), Times.Never);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -533,13 +574,15 @@ public class EventServiceTests
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddHours(2),
         };
-        _mockEventRepository.Setup((rep) => rep.UpdateEvent(evnt.Id, updateEventDTO)).Returns(updateEvent);
+        _mockEventRepository.Setup((rep) => rep.UpdateEvent(evnt.Id, updateEventDTO))
+                            .Returns(updateEvent);
 
         //Act
         var result = _eventService.UpdateEvent(evnt.Id, updateEventDTO);
 
         //Assert
-        result.Should().BeEquivalentTo(updateEvent);
+        result.Should()
+              .BeEquivalentTo(updateEvent);
         _mockEventRepository.Verify(x => x.UpdateEvent(evnt.Id, updateEventDTO), Times.Once);
         _mockValidationService.Verify(x => x.ValidateEventDTO(updateEventDTO), Times.Once);
     }
@@ -563,13 +606,15 @@ public class EventServiceTests
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddHours(2),
         };
-        _mockEventRepository.Setup((rep) => rep.UpdateEvent(evnt.Id, updateEventDTO)).Returns(updateEvent);
+        _mockEventRepository.Setup((rep) => rep.UpdateEvent(evnt.Id, updateEventDTO))
+                            .Returns(updateEvent);
 
         //Act
         var result = _eventService.UpdateEvent(evnt.Id, updateEventDTO);
 
         //Assert
-        result.Should().BeEquivalentTo(updateEvent);
+        result.Should()
+              .BeEquivalentTo(updateEvent);
         _mockEventRepository.Verify(x => x.UpdateEvent(evnt.Id, updateEventDTO), Times.Once);
         _mockValidationService.Verify(x => x.ValidateEventDTO(updateEventDTO), Times.Once);
     }
@@ -591,8 +636,10 @@ public class EventServiceTests
         var result = () => _eventService.UpdateEvent(evntId, updateEventDTO);
 
         //Assert
-        result.Should().Throw<EventException>().WithMessage($"Мероприятие с id {evntId} не найдено")
-            .Where(e => e.statusCode == HttpStatusCode.NotFound);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage($"Мероприятие с id {evntId} не найдено")
+              .Where(e => e.statusCode == HttpStatusCode.NotFound);
         _mockEventRepository.Verify(x => x.UpdateEvent(evntId, updateEventDTO), Times.Once);
         _mockValidationService.Verify(x => x.ValidateEventDTO(updateEventDTO), Times.Once);
     }
@@ -609,15 +656,19 @@ public class EventServiceTests
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddHours(2),
         };
-        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt)).Throws(() =>
-            new EventException(HttpStatusCode.BadRequest, "Название мероприятия не может быть пустым"));
+        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
+                              .Throws(() =>
+                                  new EventException(HttpStatusCode.BadRequest,
+                                      "Название мероприятия не может быть пустым"));
 
         //Act
         var result = () => _eventService.UpdateEvent(evntId, evnt);
 
         //Assert
-        result.Should().Throw<EventException>().WithMessage("Название мероприятия не может быть пустым")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Название мероприятия не может быть пустым")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.UpdateEvent(evntId, evnt), Times.Never);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -634,15 +685,19 @@ public class EventServiceTests
             StartAt = DateTime.MinValue,
             EndAt = DateTime.Now.AddHours(2),
         };
-        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt)).Throws(
-            new EventException(HttpStatusCode.BadRequest, "Дата начала мероприятия должна быть заполнена"));
+        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
+                              .Throws(
+                                  new EventException(HttpStatusCode.BadRequest,
+                                      "Дата начала мероприятия должна быть заполнена"));
 
         //Act
         var result = () => _eventService.UpdateEvent(evntId, evnt);
 
         //Assert
-        result.Should().Throw<EventException>().WithMessage("Дата начала мероприятия должна быть заполнена")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Дата начала мероприятия должна быть заполнена")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.UpdateEvent(evntId, evnt), Times.Never);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -659,15 +714,19 @@ public class EventServiceTests
             StartAt = DateTime.Now,
             EndAt = DateTime.MinValue,
         };
-        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt)).Throws(
-            new EventException(HttpStatusCode.BadRequest, "Дата конца мероприятия должна быть заполнена"));
+        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
+                              .Throws(
+                                  new EventException(HttpStatusCode.BadRequest,
+                                      "Дата конца мероприятия должна быть заполнена"));
 
         //Act
         var result = () => _eventService.UpdateEvent(evntId, evnt);
 
         //Assert
-        result.Should().Throw<EventException>().WithMessage("Дата конца мероприятия должна быть заполнена")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Дата конца мероприятия должна быть заполнена")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.UpdateEvent(evntId, evnt), Times.Never);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -684,17 +743,19 @@ public class EventServiceTests
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddHours(-1),
         };
-        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt)).Throws(
-            new EventException(HttpStatusCode.BadRequest,
-                "Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия"));
+        _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
+                              .Throws(
+                                  new EventException(HttpStatusCode.BadRequest,
+                                      "Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия"));
 
         //Act
         var result = () => _eventService.UpdateEvent(evntId, evnt);
 
         //Assert
-        result.Should().Throw<EventException>()
-            .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
+              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
         _mockEventRepository.Verify(x => x.UpdateEvent(evntId, evnt), Times.Never);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -705,8 +766,10 @@ public class EventServiceTests
     {
         //Arrange
         var evnt = _events.First();
-        _mockEventRepository.Setup(x => x.GetEventById(evnt.Id)).Returns(evnt);
-        _mockEventRepository.Setup(x => x.DeleteEvent(evnt.Id)).Returns(true);
+        _mockEventRepository.Setup(x => x.GetEventById(evnt.Id))
+                            .Returns(evnt);
+        _mockEventRepository.Setup(x => x.DeleteEvent(evnt.Id))
+                            .Returns(true);
 
         //Act
         _eventService.DeleteEvent(evnt.Id);
@@ -722,14 +785,17 @@ public class EventServiceTests
     {
         //Arrange
         var evntId = Guid.NewGuid();
-        _mockEventRepository.Setup(x => x.GetEventById(evntId)).Returns((Event?)null);
+        _mockEventRepository.Setup(x => x.GetEventById(evntId))
+                            .Returns((Event?)null);
 
         //Act
         var result = () => _eventService.DeleteEvent(evntId);
 
         // Assert
-        result.Should().Throw<EventException>().WithMessage($"Мероприятие с id {evntId} не найдено")
-            .Where(e => e.statusCode == HttpStatusCode.NotFound);
+        result.Should()
+              .Throw<EventException>()
+              .WithMessage($"Мероприятие с id {evntId} не найдено")
+              .Where(e => e.statusCode == HttpStatusCode.NotFound);
         _mockEventRepository.Verify(x => x.GetEventById(evntId), Times.Once);
         _mockEventRepository.Verify(x => x.DeleteEvent(evntId), Times.Never);
     }
