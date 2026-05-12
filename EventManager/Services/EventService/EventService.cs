@@ -37,14 +37,15 @@ public class EventService : IEventService
         }
 
         var events = _repository.GetEvents(title, from, to);
-        var paginatedEvents = new PaginatedResultDTO<Event>()
+        var paginatedEvents = events.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        var result = new PaginatedResultDTO<Event>()
         {
             currentPage = page,
-            currentPageSize = pageSize,
-            result = events.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
+            currentPageSize = paginatedEvents.Count,
+            result = paginatedEvents,
             totalAmount = events.Count
         };
-        return paginatedEvents;
+        return result;
     }
 
     public Event GetEventById(Guid id)

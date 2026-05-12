@@ -89,16 +89,17 @@ public class EventServiceTests
     }
 
     [Fact]
-    [Trait("GetEvents", "Successful")]
+    [Trait("GetEvents", "Success")]
     public void GetEvents_NoFilters_ShouldReturnAllPaginatedEvents()
     {
         //Arrange
         _mockEventRepository.Setup((rep) => rep.GetEvents(null, null, null))
                             .Returns(_events);
+        var padinatedEvents = _events.Take(10).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = 1,
-            currentPageSize = 10,
+            currentPageSize = padinatedEvents.Count,
             result = _events,
             totalAmount = _events.Count
         };
@@ -115,7 +116,7 @@ public class EventServiceTests
     [InlineData("Опера")]
     [InlineData("П")]
     [InlineData("IMAX")]
-    [Trait("GetEvents", "Successful")]
+    [Trait("GetEvents", "Success")]
     public void GetEvents_FilterByTitle_ShouldReturnMatchingEvents(string titleValue)
     {
         //Arrange
@@ -123,11 +124,11 @@ public class EventServiceTests
                          .ToList();
         _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, null, null))
                             .Returns(evt);
-
+        var paginatedEvents = evt.Take(10).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = 1,
-            currentPageSize = 10,
+            currentPageSize = paginatedEvents.Count,
             result = evt,
             totalAmount = evt.Count
         };
@@ -144,7 +145,7 @@ public class EventServiceTests
     [InlineData("asdasd")]
     [InlineData("123")]
     [InlineData("321")]
-    [Trait("GetEvents", "Successful")]
+    [Trait("GetEvents", "Success")]
     public void GetEvents_FilterByTitle_ShouldReturnEmptyList(string titleValue)
     {
         //Arrange
@@ -152,11 +153,11 @@ public class EventServiceTests
                          .ToList();
         _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, null, null))
                             .Returns(evt);
-
+        var paginatedEvents = evt.Take(10).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = 1,
-            currentPageSize = 10,
+            currentPageSize = paginatedEvents.Count,
             result = evt,
             totalAmount = evt.Count
         };
@@ -171,7 +172,7 @@ public class EventServiceTests
 
     [Theory]
     [MemberData(nameof(DatesTestData))]
-    [Trait("GetEvents", "Successful")]
+    [Trait("GetEvents", "Success")]
     public void GetEvents_FilterByDates_ShouldReturnMatchingEvents(DateTime fromDate, DateTime toDate)
     {
         //Arrange
@@ -179,11 +180,11 @@ public class EventServiceTests
                           .ToList();
         _mockEventRepository.Setup((rep) => rep.GetEvents(null, fromDate, toDate))
                             .Returns(evts);
-
+        var paginatedEvents = evts.Take(10).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = 1,
-            currentPageSize = 10,
+            currentPageSize = paginatedEvents.Count,
             result = evts,
             totalAmount = evts.Count
         };
@@ -198,7 +199,7 @@ public class EventServiceTests
 
     [Theory]
     [MemberData(nameof(FiltersTestData))]
-    [Trait("GetEvents", "Successful")]
+    [Trait("GetEvents", "Success")]
     public void GetEvent_AllFilters_ShouldReturnMatchingEvents(string titleValue, DateTime fromDate, DateTime toDate)
     {
         //Arrange
@@ -208,10 +209,11 @@ public class EventServiceTests
                           .ToList();
         _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, fromDate, toDate))
                             .Returns(evts);
+        var paginatedEvents = evts.Take(10).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = 1,
-            currentPageSize = 10,
+            currentPageSize = paginatedEvents.Count,
             result = evts,
             totalAmount = evts.Count
         };
@@ -228,7 +230,7 @@ public class EventServiceTests
     [InlineData(1, 2)]
     [InlineData(2, 2)]
     [InlineData(4, 1)]
-    [Trait("GetEvents", "Successful")]
+    [Trait("GetEvents", "Success")]
     public void GetEvent_CustomPaginationWithoutFilters_ShouldReturnMatchingEvents(int page, int pageSize)
     {
         //Arrange
@@ -240,7 +242,7 @@ public class EventServiceTests
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = page,
-            currentPageSize = pageSize,
+            currentPageSize = evts.Count,
             result = evts,
             totalAmount = _events.Count()
         };
@@ -255,7 +257,7 @@ public class EventServiceTests
 
     [Theory]
     [MemberData(nameof(PaginationAndFiltersTestData))]
-    [Trait("GetEvents", "Successful")]
+    [Trait("GetEvents", "Success")]
     public void GetEvent_CustomPaginationWitFilters_ShouldReturnMatchingEvents(string titleValue, DateTime fromDate,
         DateTime toDate, int page, int pageSize)
     {
@@ -266,13 +268,12 @@ public class EventServiceTests
                           .ToList();
         _mockEventRepository.Setup((rep) => rep.GetEvents(titleValue, fromDate, toDate))
                             .Returns(evts);
+        var paginatedEvents = evts.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
             currentPage = page,
-            currentPageSize = pageSize,
-            result = evts.Skip((page - 1) * pageSize)
-                         .Take(pageSize)
-                         .ToList(),
+            currentPageSize = paginatedEvents.Count,
+            result = paginatedEvents,
             totalAmount = evts.Count()
         };
 
