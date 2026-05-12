@@ -19,7 +19,7 @@ public class EventService : IEventService
 
     public PaginatedResultDTO<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize)
     {
-        if (from.HasValue && to.HasValue && from <= to.Value)
+        if (from.HasValue && to.HasValue && from >= to.Value)
         {
             throw new EventException(
                 HttpStatusCode.BadRequest,
