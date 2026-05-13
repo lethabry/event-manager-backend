@@ -1,10 +1,10 @@
 using EventManager.Models;
 
-namespace EventManager.Services.Interfaces;
+namespace EventManager.Services.EventService;
 
 public interface IEventService
 {
-    IReadOnlyCollection<Event> GetEvents();
+    PaginatedResultDTO<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize);
     Event? GetEventById(Guid id);
     Event CreateEvent(EventDTO newEvent);
     Event UpdateEvent(Guid id, EventDTO updatedEvent);

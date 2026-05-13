@@ -1,5 +1,7 @@
+using System.Net;
+using EventManager.Exceptions;
 using EventManager.Models;
-using EventManager.Services.Interfaces;
+using EventManager.Services.EventService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventManager.Controllers;
@@ -18,12 +20,18 @@ public class EventsController : ControllerBase
     /// <summary>
     /// Метод для получения всех мероприятий
     /// </summary>
-    [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
+    /// <param name="title">Фильтрация по названию</param>>
+    /// <param name="from">Фильтрация от конкретной даты мероприятия</param>>
+    /// <param name="to">Фильтрация до конкретной даты мероприятия</param>>
+    /// <param name="page">Номер страницы</param>>
+    /// <param name="to">Количество элементов в странице</param>>
+    [ProducesResponseType(typeof(PaginatedResultDTO<Event>), StatusCodes.Status200OK)]
     [Produces("application/json")]
     [HttpGet]
-    public IActionResult GetAll()
+    public IActionResult GetAll([FromQuery] string? title, DateTime? from, DateTime? to, int page = 1,
+        int pageSize = 10)
     {
-        var events = _eventService.GetEvents();
+        var events = _eventService.GetEvents(title, from, to, page, pageSize);
         return Ok(events);
     }
 

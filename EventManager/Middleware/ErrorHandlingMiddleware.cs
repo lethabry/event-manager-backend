@@ -1,15 +1,17 @@
-using System.Text.Json;
-using EventManager.Data;
+using EventManager.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EventManager.Middleware;
 
 public class ErrorHandlingMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<ErrorHandlingMiddleware> _logger;
 
-    public ErrorHandlingMiddleware(RequestDelegate next)
+    public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
     {
         _next = next;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -18,13 +20,9 @@ public class ErrorHandlingMiddleware
         {
             await _next(context);
         }
-        catch (ArgumentException ex)
+        catch (EventException ex)
         {
-            await HandleExceptionAsync(context, ex, 400);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            await HandleExceptionAsync(context, ex, 404);
+            await HandleExceptionAsync(context, ex, (int)ex.statusCode);
         }
         catch (Exception ex)
         {
@@ -32,17 +30,24 @@ public class ErrorHandlingMiddleware
         }
     }
 
-    private static async Task HandleExceptionAsync(HttpContext context, Exception exception, int statusCode)
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception, int statusCode)
     {
-        var response = new ErrorResponse
+        _logger.LogError(
+            exception,
+            "Unhandled exception. Method: {Method}, Path: {Path}",
+            context.Request.Method,
+            context.Request.Path
+        );
+
+        var response = new ProblemDetails
         {
             Title = exception.Message,
-            StatusCode = statusCode
+            Status = statusCode
         };
 
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
 
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        await context.Response.WriteAsJsonAsync(response);
     }
 }
