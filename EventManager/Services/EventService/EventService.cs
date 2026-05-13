@@ -2,7 +2,7 @@ using System.Net;
 using EventManager.Data;
 using EventManager.Exceptions;
 using EventManager.Models;
-using EventManager.Services.Validation;
+using EventManager.Services.ValidationService;
 
 namespace EventManager.Services.EventService;
 
@@ -40,10 +40,10 @@ public class EventService : IEventService
         var paginatedEvents = events.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var result = new PaginatedResultDTO<Event>()
         {
-            currentPage = page,
-            currentPageSize = paginatedEvents.Count,
-            result = paginatedEvents,
-            totalAmount = events.Count
+            CurrentPage = page,
+            CurrentPageSize = paginatedEvents.Count,
+            Result = paginatedEvents,
+            TotalAmount = events.Count
         };
         return result;
     }

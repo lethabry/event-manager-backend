@@ -1,6 +1,6 @@
 using EventManager.Models;
 
-namespace EventManager.Services.Validation;
+namespace EventManager.Services.ValidationService;
 
 public interface IValidationService
 {

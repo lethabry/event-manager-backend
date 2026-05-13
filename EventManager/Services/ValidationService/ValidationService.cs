@@ -2,7 +2,7 @@ using System.Net;
 using EventManager.Exceptions;
 using EventManager.Models;
 
-namespace EventManager.Services.Validation;
+namespace EventManager.Services.ValidationService;
 
 public class ValidationService : IValidationService
 {

@@ -25,7 +25,7 @@ public class EventsController : ControllerBase
     /// <param name="to">Фильтрация до конкретной даты мероприятия</param>>
     /// <param name="page">Номер страницы</param>>
     /// <param name="to">Количество элементов в странице</param>>
-    [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PaginatedResultDTO<Event>), StatusCodes.Status200OK)]
     [Produces("application/json")]
     [HttpGet]
     public IActionResult GetAll([FromQuery] string? title, DateTime? from, DateTime? to, int page = 1,

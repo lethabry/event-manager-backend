@@ -2,7 +2,7 @@ using System.Reflection;
 using EventManager.Data;
 using EventManager.Middleware;
 using EventManager.Services.EventService;
-using EventManager.Services.Validation;
+using EventManager.Services.ValidationService;
 
 var builder = WebApplication.CreateBuilder(args);
 

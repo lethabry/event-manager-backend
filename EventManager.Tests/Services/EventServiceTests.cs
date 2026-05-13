@@ -3,7 +3,7 @@ using EventManager.Data;
 using EventManager.Exceptions;
 using EventManager.Models;
 using EventManager.Services.EventService;
-using EventManager.Services.Validation;
+using EventManager.Services.ValidationService;
 using FluentAssertions;
 using Moq;
 using Xunit.Abstractions;
@@ -98,10 +98,10 @@ public class EventServiceTests
         var padinatedEvents = _events.Take(10).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
-            currentPage = 1,
-            currentPageSize = padinatedEvents.Count,
-            result = _events,
-            totalAmount = _events.Count
+            CurrentPage = 1,
+            CurrentPageSize = padinatedEvents.Count,
+            Result = _events,
+            TotalAmount = _events.Count
         };
 
         //Act
@@ -127,10 +127,10 @@ public class EventServiceTests
         var paginatedEvents = evt.Take(10).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
-            currentPage = 1,
-            currentPageSize = paginatedEvents.Count,
-            result = evt,
-            totalAmount = evt.Count
+            CurrentPage = 1,
+            CurrentPageSize = paginatedEvents.Count,
+            Result = evt,
+            TotalAmount = evt.Count
         };
 
         //Act
@@ -156,10 +156,10 @@ public class EventServiceTests
         var paginatedEvents = evt.Take(10).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
-            currentPage = 1,
-            currentPageSize = paginatedEvents.Count,
-            result = evt,
-            totalAmount = evt.Count
+            CurrentPage = 1,
+            CurrentPageSize = paginatedEvents.Count,
+            Result = evt,
+            TotalAmount = evt.Count
         };
 
         //Act
@@ -183,10 +183,10 @@ public class EventServiceTests
         var paginatedEvents = evts.Take(10).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
-            currentPage = 1,
-            currentPageSize = paginatedEvents.Count,
-            result = evts,
-            totalAmount = evts.Count
+            CurrentPage = 1,
+            CurrentPageSize = paginatedEvents.Count,
+            Result = evts,
+            TotalAmount = evts.Count
         };
 
         //Act
@@ -212,10 +212,10 @@ public class EventServiceTests
         var paginatedEvents = evts.Take(10).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
-            currentPage = 1,
-            currentPageSize = paginatedEvents.Count,
-            result = evts,
-            totalAmount = evts.Count
+            CurrentPage = 1,
+            CurrentPageSize = paginatedEvents.Count,
+            Result = evts,
+            TotalAmount = evts.Count
         };
 
         //Act
@@ -241,10 +241,10 @@ public class EventServiceTests
                             .Returns(_events);
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
-            currentPage = page,
-            currentPageSize = evts.Count,
-            result = evts,
-            totalAmount = _events.Count()
+            CurrentPage = page,
+            CurrentPageSize = evts.Count,
+            Result = evts,
+            TotalAmount = _events.Count()
         };
 
         //Act
@@ -271,10 +271,10 @@ public class EventServiceTests
         var paginatedEvents = evts.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var paginatedResult = new PaginatedResultDTO<Event>()
         {
-            currentPage = page,
-            currentPageSize = paginatedEvents.Count,
-            result = paginatedEvents,
-            totalAmount = evts.Count()
+            CurrentPage = page,
+            CurrentPageSize = paginatedEvents.Count,
+            Result = paginatedEvents,
+            TotalAmount = evts.Count()
         };
 
         //Act

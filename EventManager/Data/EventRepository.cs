@@ -88,15 +88,28 @@ public class EventRepository : IEventRepository
 
     public Event? UpdateEvent(Guid id, EventDTO eventDto)
     {
-        var updatedEvent = _events.AddOrUpdate(key: id, addValueFactory: _ => null, (key, oldValue) => new Event()
+        while (true)
         {
-            Id = oldValue.Id,
-            Title = eventDto.Title,
-            Description = string.IsNullOrEmpty(eventDto.Description) ? null : eventDto.Description,
-            StartAt = eventDto.StartAt,
-            EndAt = eventDto.EndAt,
-        });
-        return updatedEvent;
+            _events.TryGetValue(id, out var existingEvent);
+            if (existingEvent == null)
+            {
+                return null;
+            }
+
+            var updatedEvent = new Event()
+            {
+                Id = existingEvent.Id,
+                Title = eventDto.Title,
+                Description = string.IsNullOrEmpty(eventDto.Description) ? null : eventDto.Description,
+                StartAt = eventDto.StartAt,
+                EndAt = eventDto.EndAt,
+            };
+            var result = _events.TryUpdate(id, updatedEvent, existingEvent);
+            if (result)
+            {
+                return updatedEvent;
+            }
+        }
     }
 
     public bool DeleteEvent(Guid id)
