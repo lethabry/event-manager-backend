@@ -20,7 +20,7 @@ public class BookingsController : ControllerBase
     /// Метод для получения бронирования
     /// </summary>
     /// <param name="id">Id бронирования</param>.
-    [ProducesResponseType(typeof(Booking), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BookingDTO), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)

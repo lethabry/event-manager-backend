@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using EventManager.Common;
 using EventManager.Models;
 
 namespace EventManager.Data.BookingRepository;
@@ -23,5 +24,11 @@ public class BookingRepository : IBookingRepository
         await Task.Delay(1000);
         var booking = new Booking(eventId);
         return _bookings.TryAdd(booking.Id, booking) ? booking : null;
+    }
+
+    public List<Booking> GetPendingBookings(out List<Booking> bookings)
+    {
+        var bookingsList = _bookings.Values.ToList();
+        return bookings = bookingsList.Where((b) => b.Status == BookingStatus.Pending).ToList();
     }
 }

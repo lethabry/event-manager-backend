@@ -1,4 +1,5 @@
 using System.Reflection;
+using EventManager.BackgroundServices;
 using EventManager.Data.BookingRepository;
 using EventManager.Data.EventRepository;
 using EventManager.Middleware;
@@ -21,6 +22,7 @@ builder.Services.AddSingleton<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IValidationService, ValidationService>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddHostedService<BookingConfirmationService>();
 
 if (builder.Environment.IsDevelopment())
 {

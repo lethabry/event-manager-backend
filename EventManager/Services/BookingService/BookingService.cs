@@ -22,7 +22,7 @@ public class BookingService : IBookingService
             throw new BookingException(HttpStatusCode.NotFound, $"Бронирование с id {bookingId} не найдено");
         }
 
-        return new BookingDTO(booking.Id, booking.EventId, booking.Status);
+        return new BookingDTO(booking.Id, booking.EventId, booking.Status, booking.ProcessedAt);
     }
 
     public async Task<BookingDTO?> CreateBookingAsync(Guid eventId)
@@ -33,6 +33,6 @@ public class BookingService : IBookingService
             throw new BookingException(HttpStatusCode.Conflict, "Не удалось создать бронирование");
         }
 
-        return new BookingDTO(booking.Id, booking.EventId, booking.Status);
+        return new BookingDTO(booking.Id, booking.EventId, booking.Status, booking.ProcessedAt);
     }
 }
