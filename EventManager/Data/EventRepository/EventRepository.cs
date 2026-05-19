@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using EventManager.Models;
 
-namespace EventManager.Data;
+namespace EventManager.Data.EventRepository;
 
 public class EventRepository : IEventRepository
 {

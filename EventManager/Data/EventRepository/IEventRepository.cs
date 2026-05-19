@@ -1,6 +1,6 @@
 using EventManager.Models;
 
-namespace EventManager.Data;
+namespace EventManager.Data.EventRepository;
 
 public interface IEventRepository
 {

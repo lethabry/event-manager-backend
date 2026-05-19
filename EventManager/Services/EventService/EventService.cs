@@ -1,5 +1,5 @@
 using System.Net;
-using EventManager.Data;
+using EventManager.Data.EventRepository;
 using EventManager.Exceptions;
 using EventManager.Models;
 using EventManager.Services.ValidationService;
