@@ -5,7 +5,7 @@ using EventManager.Models;
 
 namespace EventManager.Services.BookingService;
 
-public class BookingService
+public class BookingService : IBookingService
 {
     private IBookingRepository _bookingRepository;
 
@@ -14,7 +14,7 @@ public class BookingService
         _bookingRepository = bookingRepository;
     }
 
-    public async Task<Booking?> GetBookingByIdAsync(Guid bookingId)
+    public async Task<BookingDTO?> GetBookingByIdAsync(Guid bookingId)
     {
         var booking = await _bookingRepository.GetBookingByIdAsync(bookingId);
         if (booking == null)
@@ -22,11 +22,17 @@ public class BookingService
             throw new BookingException(HttpStatusCode.NotFound, $"Бронирование с id {bookingId} не найдено");
         }
 
-        return booking;
+        return new BookingDTO(booking.Id, booking.EventId, booking.Status);
     }
 
-    public async Task<Booking?> CreateBookingAsync(Guid eventId)
+    public async Task<BookingDTO?> CreateBookingAsync(Guid eventId)
     {
-        return await _bookingRepository.CreateBookingAsync(eventId);
+        var booking = await _bookingRepository.CreateBookingAsync(eventId);
+        if (booking == null)
+        {
+            throw new BookingException(HttpStatusCode.Conflict, "Не удалось создать бронирование");
+        }
+
+        return new BookingDTO(booking.Id, booking.EventId, booking.Status);
     }
 }

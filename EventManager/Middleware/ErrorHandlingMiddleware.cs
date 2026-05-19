@@ -24,6 +24,10 @@ public class ErrorHandlingMiddleware
         {
             await HandleExceptionAsync(context, ex, (int)ex.statusCode);
         }
+        catch (BookingException ex)
+        {
+            await HandleExceptionAsync(context, ex, (int)ex.statusCode);
+        }
         catch (Exception ex)
         {
             await HandleExceptionAsync(context, ex, 500);

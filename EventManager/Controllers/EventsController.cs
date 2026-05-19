@@ -1,6 +1,5 @@
-using System.Net;
-using EventManager.Exceptions;
 using EventManager.Models;
+using EventManager.Services.BookingService;
 using EventManager.Services.EventService;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,13 +7,16 @@ namespace EventManager.Controllers;
 
 [ApiController]
 [Route("[controller]")]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public class EventsController : ControllerBase
 {
-    private IEventService _eventService;
+    private readonly IEventService _eventService;
+    private readonly IBookingService _bookingService;
 
-    public EventsController(IEventService eventService)
+    public EventsController(IEventService eventService, IBookingService bookingService)
     {
         _eventService = eventService;
+        _bookingService = bookingService;
     }
 
     /// <summary>
@@ -40,7 +42,7 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="id">Id мероприятия</param> 
     [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpGet("{id}")]
     public IActionResult GetById(Guid id)
@@ -66,7 +68,7 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="id">Id мероприятия</param>
     [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpPut("{id}")]
     public IActionResult Put(Guid id, [FromBody] EventDTO changedEvent)
@@ -85,5 +87,25 @@ public class EventsController : ControllerBase
     {
         _eventService.DeleteEvent(id);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Метод для бронирования мероприятия
+    /// </summary>
+    /// <param name="eventId">Id мероприятия</param>
+    [ProducesResponseType(typeof(BookingDTO), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [HttpPost("{eventId}/book")]
+    public async Task<IActionResult> Book(Guid eventId)
+    {
+        _eventService.GetEventById(eventId);
+
+        var booking = await _bookingService.CreateBookingAsync(eventId);
+        return AcceptedAtAction(
+            actionName: nameof(BookingsController.GetById),
+            controllerName: "Bookings",
+            routeValues: new { id = booking.Id },
+            value: booking
+        );
     }
 }
