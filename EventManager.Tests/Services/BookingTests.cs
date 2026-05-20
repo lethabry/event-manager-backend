@@ -17,6 +17,7 @@ public class BookingTests
 
         //Assert
         booking.Should().NotBeNull();
+        booking.Id.Should().NotBeEmpty();
         booking.EventId.Should().Be(eventId);
         booking.Status.Should().Be(BookingStatus.Pending);
         booking.ProcessedAt.Should().BeNull();
@@ -36,6 +37,7 @@ public class BookingTests
         //Assert
         status.Should().Be(true);
         booking.Should().NotBeNull();
+        booking.Id.Should().NotBeEmpty();
         booking.EventId.Should().Be(eventId);
         booking.Status.Should().Be(BookingStatus.Confirmed);
         booking.ProcessedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
@@ -55,6 +57,7 @@ public class BookingTests
         //Assert
         status.Should().Be(true);
         booking.Should().NotBeNull();
+        booking.Id.Should().NotBeEmpty();
         booking.EventId.Should().Be(eventId);
         booking.Status.Should().Be(BookingStatus.Rejected);
         booking.ProcessedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
@@ -75,6 +78,7 @@ public class BookingTests
         //Assert
         status.Should().Be(false);
         booking.Should().NotBeNull();
+        booking.Id.Should().NotBeEmpty();
         booking.EventId.Should().Be(eventId);
         booking.Status.Should().Be(BookingStatus.Rejected);
         booking.ProcessedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
@@ -95,6 +99,7 @@ public class BookingTests
         //Assert
         status.Should().Be(false);
         booking.Should().NotBeNull();
+        booking.Id.Should().NotBeEmpty();
         booking.EventId.Should().Be(eventId);
         booking.Status.Should().Be(BookingStatus.Confirmed);
         booking.ProcessedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));

@@ -6,23 +6,23 @@ namespace EventManager.Exceptions;
 public class BookingException : Exception
 {
     public HttpStatusCode statusCode { get; }
-    public Booking evnt { get; }
+    public Booking? booking { get; }
 
     public BookingException()
     {
     }
 
-    public BookingException(HttpStatusCode code, string message, Booking? e = null)
+    public BookingException(HttpStatusCode code, string message, Booking? b = null)
         : base(message)
     {
-        evnt = e;
+        booking = b;
         statusCode = code;
     }
 
-    public BookingException(HttpStatusCode code, string message, Booking e, Exception inner)
+    public BookingException(HttpStatusCode code, string message, Booking b, Exception inner)
         : base(message, inner)
     {
-        evnt = e;
+        booking = b;
         statusCode = code;
     }
 }

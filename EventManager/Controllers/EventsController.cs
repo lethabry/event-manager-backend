@@ -26,7 +26,7 @@ public class EventsController : ControllerBase
     /// <param name="from">Фильтрация от конкретной даты мероприятия</param>>
     /// <param name="to">Фильтрация до конкретной даты мероприятия</param>>
     /// <param name="page">Номер страницы</param>>
-    /// <param name="to">Количество элементов в странице</param>>
+    /// <param name="pageSize">Количество элементов в странице</param>>
     [ProducesResponseType(typeof(PaginatedResultDTO<Event>), StatusCodes.Status200OK)]
     [Produces("application/json")]
     [HttpGet]
