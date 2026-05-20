@@ -3,6 +3,9 @@ using EventManager.Data.BookingRepository;
 
 namespace EventManager.BackgroundServices;
 
+/// <summary>
+/// Сервис для имитации запроса на внешний сервис для подтверждение бронирования
+/// </summary>
 public class BookingConfirmationService : BackgroundService
 {
     private readonly IBookingRepository _bookingRepository;
@@ -27,8 +30,8 @@ public class BookingConfirmationService : BackgroundService
                 {
                     if (!stoppingToken.IsCancellationRequested)
                     {
-                        await Task.Delay(5000, stoppingToken);
-                        booking.UpdateBookingStatus(BookingStatus.Confirmed);
+                        await Task.Delay(2000, stoppingToken);
+                        booking.Confirm();
                     }
                 }
             }
@@ -41,7 +44,7 @@ public class BookingConfirmationService : BackgroundService
                 _logger.LogError(e, $"Ошибка при обновлении статуса бронирования {e.Message}");
             }
 
-            await Task.Delay(30000, stoppingToken);
+            await Task.Delay(5000, stoppingToken);
         }
 
         _logger.LogInformation("BookingConfirmationService остановлен");

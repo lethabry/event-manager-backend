@@ -1,7 +1,5 @@
 #nullable disable
-using System.Data;
 using EventManager.Common;
-using Microsoft.OpenApi;
 
 namespace EventManager.Models;
 
@@ -21,14 +19,26 @@ public class Booking
         CreatedAt = DateTime.UtcNow;
     }
 
-    public bool UpdateBookingStatus(BookingStatus status)
+    public bool Confirm()
     {
         if (Status != BookingStatus.Pending)
         {
             return false;
         }
 
-        Status = status;
+        Status = BookingStatus.Confirmed;
+        ProcessedAt = DateTime.UtcNow;
+        return true;
+    }
+
+    public bool Reject()
+    {
+        if (Status != BookingStatus.Pending)
+        {
+            return false;
+        }
+
+        Status = BookingStatus.Rejected;
         ProcessedAt = DateTime.UtcNow;
         return true;
     }
@@ -41,11 +51,11 @@ public record BookingDTO
     public string Status { get; }
     public DateTime? ProcessedAt { get; }
 
-    public BookingDTO(Guid id, Guid eventId, BookingStatus status, DateTime? processedAt)
+    public BookingDTO(Booking booking)
     {
-        Id = id;
-        EventId = eventId;
-        Status = Enum.GetName(typeof(BookingStatus), status)?.ToLower();
-        ProcessedAt = processedAt;
+        Id = booking.Id;
+        EventId = booking.EventId;
+        Status = Enum.GetName(typeof(BookingStatus), booking.Status)?.ToLower();
+        ProcessedAt = booking.ProcessedAt;
     }
 }
