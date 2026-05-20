@@ -25,13 +25,13 @@ public class BookingConfirmationService : BackgroundService
         {
             try
             {
-                _bookingRepository.GetPendingBookings(out var pendingBookings);
+                var pendingBookings = await _bookingRepository.GetBookings(BookingStatus.Pending);
                 foreach (var booking in pendingBookings)
                 {
                     if (!stoppingToken.IsCancellationRequested)
                     {
-                        await Task.Delay(2000, stoppingToken);
                         booking.Confirm();
+                        await _bookingRepository.UpdateBooking(booking, stoppingToken);
                     }
                 }
             }
@@ -44,7 +44,7 @@ public class BookingConfirmationService : BackgroundService
                 _logger.LogError(e, $"Ошибка при обновлении статуса бронирования {e.Message}");
             }
 
-            await Task.Delay(5000, stoppingToken);
+            await Task.Delay(15000, stoppingToken);
         }
 
         _logger.LogInformation("BookingConfirmationService остановлен");

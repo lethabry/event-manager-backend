@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
+using System.Net;
 using EventManager.Common;
+using EventManager.Exceptions;
 using EventManager.Models;
 
 namespace EventManager.Data.BookingRepository;
@@ -26,9 +28,26 @@ public class BookingRepository : IBookingRepository
         return _bookings.TryAdd(booking.Id, booking) ? booking : null;
     }
 
-    public List<Booking> GetPendingBookings(out List<Booking> bookings)
+    public async Task<IReadOnlyList<Booking>> GetBookings(BookingStatus? status = null)
     {
-        var bookingsList = _bookings.Values.ToList();
-        return bookings = bookingsList.Where((b) => b.Status == BookingStatus.Pending).ToList();
+        await Task.Delay(1000);
+        IEnumerable<Booking> result = _bookings.Values;
+        if (status != null)
+        {
+            result = result.Where((b) => b.Status == status);
+        }
+
+        return result.ToList().AsReadOnly();
+    }
+
+    public async Task<Booking?> UpdateBooking(Booking updatedBooking, CancellationToken ct = default)
+    {
+        var existingBooking = await GetBookingByIdAsync(updatedBooking.Id);
+        if (existingBooking == null)
+        {
+            throw new BookingException(HttpStatusCode.NotFound, $"Мероприятия с id {updatedBooking.Id} не найдено");
+        }
+
+        return _bookings.TryUpdate(updatedBooking.Id, updatedBooking, existingBooking) ? updatedBooking : null;
     }
 }

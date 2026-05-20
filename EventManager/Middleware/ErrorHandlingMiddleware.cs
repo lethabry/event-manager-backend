@@ -20,6 +20,10 @@ public class ErrorHandlingMiddleware
         {
             await _next(context);
         }
+        catch (OperationCanceledException ex)
+        {
+            await HandleExceptionAsync(context, ex, 499);
+        }
         catch (EventException ex)
         {
             await HandleExceptionAsync(context, ex, (int)ex.statusCode);
