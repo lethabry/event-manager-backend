@@ -16,7 +16,7 @@ public class BookingsController : ControllerBase
         _bookingService = bookingService;
     }
 
-    /// <summary>s
+    /// <summary>
     /// Метод для получения бронирования
     /// </summary>
     /// <param name="id">Id бронирования</param>.

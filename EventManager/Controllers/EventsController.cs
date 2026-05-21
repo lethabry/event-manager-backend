@@ -98,8 +98,6 @@ public class EventsController : ControllerBase
     [HttpPost("{eventId}/book")]
     public async Task<IActionResult> Book(Guid eventId)
     {
-        _eventService.GetEventById(eventId);
-
         var booking = await _bookingService.CreateBookingAsync(eventId);
         return AcceptedAtAction(
             actionName: nameof(BookingsController.GetById),

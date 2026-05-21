@@ -30,6 +30,7 @@ public class BookingConfirmationService : BackgroundService
                 {
                     if (!stoppingToken.IsCancellationRequested)
                     {
+                        await Task.Delay(2000, stoppingToken);
                         booking.Confirm();
                         await _bookingRepository.UpdateBooking(booking, stoppingToken);
                     }

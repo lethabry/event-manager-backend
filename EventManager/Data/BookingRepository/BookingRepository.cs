@@ -17,20 +17,17 @@ public class BookingRepository : IBookingRepository
 
     public async Task<Booking?> GetBookingByIdAsync(Guid id)
     {
-        await Task.Delay(1000);
         return _bookings.TryGetValue(id, out var booking) ? booking : null;
     }
 
     public async Task<Booking?> CreateBookingAsync(Guid eventId)
     {
-        await Task.Delay(1000);
         var booking = new Booking(eventId);
         return _bookings.TryAdd(booking.Id, booking) ? booking : null;
     }
 
     public async Task<IReadOnlyList<Booking>> GetBookings(BookingStatus? status = null)
     {
-        await Task.Delay(1000);
         IEnumerable<Booking> result = _bookings.Values;
         if (status != null)
         {
@@ -45,7 +42,7 @@ public class BookingRepository : IBookingRepository
         var existingBooking = await GetBookingByIdAsync(updatedBooking.Id);
         if (existingBooking == null)
         {
-            throw new BookingException(HttpStatusCode.NotFound, $"Мероприятия с id {updatedBooking.Id} не найдено");
+            throw new BookingException(HttpStatusCode.NotFound, $"Бронирование с id {updatedBooking.Id} не найдено");
         }
 
         return _bookings.TryUpdate(updatedBooking.Id, updatedBooking, existingBooking) ? updatedBooking : null;
