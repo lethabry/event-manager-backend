@@ -1,6 +1,9 @@
 using System.Reflection;
-using EventManager.Data;
+using EventManager.BackgroundServices;
+using EventManager.Data.BookingRepository;
+using EventManager.Data.EventRepository;
 using EventManager.Middleware;
+using EventManager.Services.BookingService;
 using EventManager.Services.EventService;
 using EventManager.Services.ValidationService;
 
@@ -15,8 +18,11 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddSingleton<IEventRepository, EventRepository>();
+builder.Services.AddSingleton<IBookingRepository, BookingRepository>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IValidationService, ValidationService>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddHostedService<BookingConfirmationService>();
 
 if (builder.Environment.IsDevelopment())
 {

@@ -1,12 +1,11 @@
 using System.Net;
-using EventManager.Data;
+using EventManager.Data.EventRepository;
 using EventManager.Exceptions;
 using EventManager.Models;
 using EventManager.Services.EventService;
 using EventManager.Services.ValidationService;
 using FluentAssertions;
 using Moq;
-using Xunit.Abstractions;
 
 namespace EventManager.Tests.Services;
 
