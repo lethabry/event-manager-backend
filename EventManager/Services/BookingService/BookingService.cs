@@ -8,6 +8,7 @@ namespace EventManager.Services.BookingService;
 
 public class BookingService : IBookingService
 {
+    private readonly object _bookingLock = new();
     private IBookingRepository _bookingRepository;
     private IEventService _eventService;
 
@@ -30,8 +31,21 @@ public class BookingService : IBookingService
 
     public async Task<BookingDTO?> CreateBookingAsync(Guid eventId)
     {
-         _eventService.GetEventById(eventId);
-        var booking = await _bookingRepository.CreateBookingAsync(eventId);
+        Booking? booking;
+        lock (_bookingLock)
+        {
+            var evt = _eventService.GetEventById(eventId);
+            var isBookingAvailable = evt.TryReserveSeats();
+            if (isBookingAvailable)
+            {
+                booking = _bookingRepository.CreateBookingAsync(eventId);
+            }
+            else
+            {
+                throw new NoAvailableSeatsException(HttpStatusCode.Conflict, "No available seats for this event");
+            }
+
+        }
         if (booking == null)
         {
             throw new BookingException(HttpStatusCode.Conflict, "Не удалось создать бронирование");

@@ -95,6 +95,7 @@ public class EventsController : ControllerBase
     /// <param name="eventId">Id мероприятия</param>
     [ProducesResponseType(typeof(BookingDTO), StatusCodes.Status202Accepted)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [HttpPost("{eventId}/book")]
     public async Task<IActionResult> Book(Guid eventId)
     {

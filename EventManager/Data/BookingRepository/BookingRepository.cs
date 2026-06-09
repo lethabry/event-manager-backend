@@ -20,7 +20,7 @@ public class BookingRepository : IBookingRepository
         return _bookings.TryGetValue(id, out var booking) ? booking : null;
     }
 
-    public async Task<Booking?> CreateBookingAsync(Guid eventId)
+    public Booking? CreateBookingAsync(Guid eventId)
     {
         var booking = new Booking(eventId);
         return _bookings.TryAdd(booking.Id, booking) ? booking : null;

@@ -1,5 +1,7 @@
 using EventManager.Common;
 using EventManager.Data.BookingRepository;
+using EventManager.Models;
+using EventManager.Services.EventService;
 
 namespace EventManager.BackgroundServices;
 
@@ -9,12 +11,16 @@ namespace EventManager.BackgroundServices;
 public class BookingConfirmationService : BackgroundService
 {
     private readonly IBookingRepository _bookingRepository;
+    private readonly IEventService _eventService;
     private readonly ILogger<BookingConfirmationService> _logger;
 
-    public BookingConfirmationService(IBookingRepository bookingRepository, ILogger<BookingConfirmationService> logger)
+    private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
+
+    public BookingConfirmationService(IBookingRepository bookingRepository, ILogger<BookingConfirmationService> logger, IEventService eventService)
     {
         _bookingRepository = bookingRepository;
         _logger = logger;
+        _eventService = eventService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -26,19 +32,12 @@ public class BookingConfirmationService : BackgroundService
             try
             {
                 var pendingBookings = await _bookingRepository.GetBookings(BookingStatus.Pending);
-                foreach (var booking in pendingBookings)
-                {
-                    if (!stoppingToken.IsCancellationRequested)
-                    {
-                        await Task.Delay(2000, stoppingToken);
-                        booking.Confirm();
-                        await _bookingRepository.UpdateBooking(booking, stoppingToken);
-                    }
-                }
+                var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, stoppingToken));
+                await Task.WhenAll(tasks);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
-                break;
+                _logger.LogInformation("Сервис ");
             }
             catch (Exception e)
             {
@@ -49,5 +48,40 @@ public class BookingConfirmationService : BackgroundService
         }
 
         _logger.LogInformation("BookingConfirmationService остановлен");
+    }
+
+    private async Task ProcessBookingAsync(Booking booking, CancellationToken stoppingToken)
+    {
+        await Task.Delay(2000, stoppingToken);
+        _processingSemaphore.Wait(stoppingToken);
+        Event? evt = null;
+        try
+        {
+            evt = _eventService.GetEventById(booking.EventId);
+            if (evt == null)
+            {
+                booking.Reject();
+                _logger.LogWarning($"Мероприятия с id {booking.EventId} не найдено");
+            }
+            else
+            {
+                booking.Confirm();
+                await _bookingRepository.UpdateBooking(booking, stoppingToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Сервис останавливает работу");
+        }
+        catch (Exception e)
+        {
+            booking.Reject();
+            evt?.ReleaseSeats();
+            _logger.LogError(e.Message, e);
+        }
+        finally
+        {
+            _processingSemaphore.Release();
+        }
     }
 }

@@ -6,7 +6,7 @@ namespace EventManager.Data.BookingRepository;
 public interface IBookingRepository
 {
     public Task<Booking?> GetBookingByIdAsync(Guid id);
-    public Task<Booking?> CreateBookingAsync(Guid eventId);
+    public Booking? CreateBookingAsync(Guid eventId);
     public Task<IReadOnlyList<Booking>> GetBookings(BookingStatus? status = null);
     public Task<Booking?> UpdateBooking(Booking updatedBooking, CancellationToken cancellationToken = default);
 }
