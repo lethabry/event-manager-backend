@@ -6,7 +6,7 @@ public interface IEventService
 {
     PaginatedResultDTO<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize);
     Event? GetEventById(Guid id);
-    Event CreateEvent(EventDTO newEvent);
-    Event UpdateEvent(Guid id, EventDTO updatedEvent);
+    Event CreateEvent(CreateEventDTO newEvent);
+    Event UpdateEvent(Guid id, EventInfoDTO updatedEvent);
     void DeleteEvent(Guid id);
 }

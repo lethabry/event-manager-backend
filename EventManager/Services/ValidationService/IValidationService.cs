@@ -4,5 +4,6 @@ namespace EventManager.Services.ValidationService;
 
 public interface IValidationService
 {
-    public void ValidateEventDTO(EventDTO eventDTO);
+    public void ValidateEventDTO(CreateEventDTO eventDTO);
+    public void ValidateEventDTO(EventInfoDTO eventDTO);
 }
