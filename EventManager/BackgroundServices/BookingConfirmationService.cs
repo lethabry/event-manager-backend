@@ -1,6 +1,5 @@
 using EventManager.Common;
 using EventManager.Data.BookingRepository;
-using EventManager.Data.EventRepository;
 using EventManager.Models;
 using EventManager.Services.EventService;
 
@@ -12,16 +11,16 @@ namespace EventManager.BackgroundServices;
 public class BookingConfirmationService : BackgroundService
 {
     private readonly IBookingRepository _bookingRepository;
-    private readonly IEventRepository _eventRepository;
     private readonly ILogger<BookingConfirmationService> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
-    public BookingConfirmationService(IBookingRepository bookingRepository, ILogger<BookingConfirmationService> logger, IEventRepository eventRepository)
+    public BookingConfirmationService(IBookingRepository bookingRepository, ILogger<BookingConfirmationService> logger, IServiceScopeFactory scopeFactory)
     {
         _bookingRepository = bookingRepository;
         _logger = logger;
-        _eventRepository = eventRepository;
+        _scopeFactory = scopeFactory;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -45,7 +44,7 @@ public class BookingConfirmationService : BackgroundService
                 _logger.LogError(e, $"Ошибка при обновлении статуса бронирования {e.Message}");
             }
 
-            await Task.Delay(15000, stoppingToken);
+            await Task.Delay(AppConstants.DelayBetweenBookingConfirmationInteration, stoppingToken);
         }
 
         _logger.LogInformation("BookingConfirmationService остановлен");
@@ -53,12 +52,14 @@ public class BookingConfirmationService : BackgroundService
 
     private async Task ProcessBookingAsync(Booking booking, CancellationToken stoppingToken)
     {
-        await Task.Delay(2000, stoppingToken);
-        await _processingSemaphore.WaitAsync(stoppingToken);
+        await Task.Delay(AppConstants.DelayBetweenBookingConfirmationHandling, stoppingToken);
         Event? evt = null;
+        using var scope = _scopeFactory.CreateScope();
+        var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+        await _processingSemaphore.WaitAsync(stoppingToken);
         try
         {
-            evt = _eventRepository.GetEventById(booking.EventId);
+            evt = eventService.GetEventById(booking.EventId);
             if (evt == null)
             {
                 booking.Reject();
@@ -78,6 +79,16 @@ public class BookingConfirmationService : BackgroundService
         {
             booking.Reject();
             evt?.ReleaseSeats();
+            var updatedEvt = new EventInfoDTO()
+            {
+                Title = evt.Title,
+                Description = string.IsNullOrEmpty(evt.Description) ? null : evt.Description,
+                StartAt = evt.StartAt,
+                EndAt = evt.EndAt,
+                TotalSeats = evt.TotalSeats,
+                AvailableSeats = evt.AvailableSeats
+            };
+            eventService.UpdateEvent(evt.Id, updatedEvt);
             _logger.LogError(e.Message, e);
         }
         finally

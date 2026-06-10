@@ -1,8 +1,9 @@
 using EventManager.BackgroundServices;
 using EventManager.Common;
 using EventManager.Data.BookingRepository;
-using EventManager.Data.EventRepository;
 using EventManager.Models;
+using EventManager.Services.EventService;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -13,14 +14,20 @@ public class BookingConfirmationServiceTests
     private readonly Mock<IBookingRepository> _mockRepository;
     private readonly Mock<ILogger<BookingConfirmationService>> _mockLogger;
     private readonly BookingConfirmationService _service;
-    private readonly Mock<IEventRepository> _mockEventRepository;
+    private readonly Mock<IEventService> _mockEventService;
 
     public BookingConfirmationServiceTests()
     {
         _mockRepository = new Mock<IBookingRepository>();
         _mockLogger = new Mock<ILogger<BookingConfirmationService>>();
-        _mockEventRepository = new Mock<IEventRepository>();
-        _service = new BookingConfirmationService(_mockRepository.Object, _mockLogger.Object, _mockEventRepository.Object);
+        _mockEventService = new Mock<IEventService>();
+
+        var services = new ServiceCollection();
+        services.AddScoped(_ => _mockEventService.Object);
+        var serviceProvider = services.BuildServiceProvider();
+        var realServiceFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
+
+        _service = new BookingConfirmationService(_mockRepository.Object, _mockLogger.Object, realServiceFactory);
     }
 
     [Fact]
@@ -32,7 +39,7 @@ public class BookingConfirmationServiceTests
         List<Booking> pendingBookings = [booking];
 
         var ct = new CancellationTokenSource();
-        _mockEventRepository.Setup(r => r.GetEventById(evt.Id)).Returns(evt);
+        _mockEventService.Setup(r => r.GetEventById(evt.Id)).Returns(evt);
         _mockRepository.Setup(r => r.GetBookings(BookingStatus.Pending))
             .ReturnsAsync(pendingBookings.AsReadOnly());
         _mockRepository.Setup(r => r.UpdateBooking(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
@@ -64,11 +71,11 @@ public class BookingConfirmationServiceTests
         var secondBooking = new Booking(secondEvt.Id);
         var thirdBooking = new Booking(thirdEvt.Id);
         List<Booking> pendingBookings = [firstBooking, secondBooking, thirdBooking];
-        
+
         var ct = new CancellationTokenSource();
-        _mockEventRepository.Setup(r => r.GetEventById(firstEvt.Id)).Returns(firstEvt);
-        _mockEventRepository.Setup(r => r.GetEventById(secondEvt.Id)).Returns(secondEvt);
-        _mockEventRepository.Setup(r => r.GetEventById(thirdEvt.Id)).Returns(thirdEvt);
+        _mockEventService.Setup(r => r.GetEventById(firstEvt.Id)).Returns(firstEvt);
+        _mockEventService.Setup(r => r.GetEventById(secondEvt.Id)).Returns(secondEvt);
+        _mockEventService.Setup(r => r.GetEventById(thirdEvt.Id)).Returns(thirdEvt);
         _mockRepository.Setup(r => r.GetBookings(BookingStatus.Pending))
             .ReturnsAsync(pendingBookings.AsReadOnly());
         _mockRepository.Setup(r => r.UpdateBooking(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
