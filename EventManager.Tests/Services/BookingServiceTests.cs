@@ -18,17 +18,13 @@ public class BookingServiceTests
     private readonly IBookingService _bookingService;
     private readonly Mock<IEventService> _mockEventService;
     private readonly Event _event;
-
-    private readonly ITestOutputHelper _output;
-
+    
     public BookingServiceTests(ITestOutputHelper output)
     {
         _mockBookingRepository = new Mock<IBookingRepository>();
         _mockEventService = new Mock<IEventService>();
         _bookingService = new BookingService(_mockBookingRepository.Object, _mockEventService.Object);
         _event = Event.Create("Премьера: 'Дюна: Часть вторая' (IMAX)", new DateTime(2026, 4, 22, 19, 0, 0), new DateTime(2026, 4, 22, 22, 15, 0), 5, "Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами. ");
-
-        _output = output;
     }
 
     [Fact]
@@ -438,15 +434,11 @@ public class BookingServiceTests
         {
             try
             {
-                _output.WriteLine($"Before Created booking: {createdBookings.Count} bookings");
                 var booking = await _bookingService.CreateBookingAsync(evt.Id);
                 createdBookings.Add(booking);
-                _output.WriteLine($"Created booking: {createdBookings.Count} bookings");
             }
             catch (Exception exception)
             {
-                _output.WriteLine("exception: {0}", exception.Message);
-                // Игнорируем
             }
         }));
 
