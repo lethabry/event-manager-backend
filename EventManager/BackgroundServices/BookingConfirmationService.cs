@@ -1,5 +1,6 @@
 using EventManager.Common;
 using EventManager.Data.BookingRepository;
+using EventManager.Data.EventRepository;
 using EventManager.Models;
 using EventManager.Services.EventService;
 
@@ -11,16 +12,16 @@ namespace EventManager.BackgroundServices;
 public class BookingConfirmationService : BackgroundService
 {
     private readonly IBookingRepository _bookingRepository;
-    private readonly IEventService _eventService;
+    private readonly IEventRepository _eventRepository;
     private readonly ILogger<BookingConfirmationService> _logger;
 
     private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
-    public BookingConfirmationService(IBookingRepository bookingRepository, ILogger<BookingConfirmationService> logger, IEventService eventService)
+    public BookingConfirmationService(IBookingRepository bookingRepository, ILogger<BookingConfirmationService> logger, IEventRepository eventRepository)
     {
         _bookingRepository = bookingRepository;
         _logger = logger;
-        _eventService = eventService;
+        _eventRepository = eventRepository;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -53,11 +54,11 @@ public class BookingConfirmationService : BackgroundService
     private async Task ProcessBookingAsync(Booking booking, CancellationToken stoppingToken)
     {
         await Task.Delay(2000, stoppingToken);
-        _processingSemaphore.Wait(stoppingToken);
+        await _processingSemaphore.WaitAsync(stoppingToken);
         Event? evt = null;
         try
         {
-            evt = _eventService.GetEventById(booking.EventId);
+            evt = _eventRepository.GetEventById(booking.EventId);
             if (evt == null)
             {
                 booking.Reject();

@@ -76,10 +76,10 @@ public class Event
     {
         lock (_reverseLocker)
         {
-            if (AvailableSeats > count)
+            if (AvailableSeats >= count)
             {
                 AvailableSeats -= count;
-                return AvailableSeats > 0;
+                return true;
             }
         }
         return false;

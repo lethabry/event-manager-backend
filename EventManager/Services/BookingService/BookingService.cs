@@ -38,7 +38,17 @@ public class BookingService : IBookingService
             var isBookingAvailable = evt.TryReserveSeats();
             if (isBookingAvailable)
             {
+                var evtDTO = new EventInfoDTO()
+                {
+                    Title = evt.Title,
+                    Description = string.IsNullOrEmpty(evt.Description) ? null : evt.Description,
+                    AvailableSeats = evt.AvailableSeats,
+                    TotalSeats = evt.TotalSeats,
+                    StartAt = evt.StartAt,
+                    EndAt = evt.EndAt,
+                };
                 booking = _bookingRepository.CreateBookingAsync(eventId);
+                _eventService.UpdateEvent(evt.Id, evtDTO);
             }
             else
             {
