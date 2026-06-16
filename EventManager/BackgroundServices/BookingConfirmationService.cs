@@ -1,5 +1,6 @@
 using EventManager.Common;
 using EventManager.Data.BookingRepository;
+using EventManager.Exceptions;
 using EventManager.Models;
 using EventManager.Services.EventService;
 
@@ -78,17 +79,21 @@ public class BookingConfirmationService : BackgroundService
         catch (Exception e)
         {
             booking.Reject();
-            evt?.ReleaseSeats();
-            var updatedEvt = new EventInfoDTO()
+            await _bookingRepository.UpdateBooking(booking, stoppingToken);
+            if (evt != null)
             {
-                Title = evt.Title,
-                Description = string.IsNullOrEmpty(evt.Description) ? null : evt.Description,
-                StartAt = evt.StartAt,
-                EndAt = evt.EndAt,
-                TotalSeats = evt.TotalSeats,
-                AvailableSeats = evt.AvailableSeats
-            };
-            eventService.UpdateEvent(evt.Id, updatedEvt);
+                evt.ReleaseSeats();
+                var updatedEvt = new EventInfoDTO()
+                {
+                    Title = evt.Title,
+                    Description = string.IsNullOrEmpty(evt.Description) ? null : evt.Description,
+                    StartAt = evt.StartAt,
+                    EndAt = evt.EndAt,
+                    TotalSeats = evt.TotalSeats,
+                    AvailableSeats = evt.AvailableSeats
+                };
+                eventService.UpdateEvent(evt.Id, updatedEvt);
+            }
             _logger.LogError(e.Message, e);
         }
         finally
