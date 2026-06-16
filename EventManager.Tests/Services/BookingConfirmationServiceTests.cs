@@ -2,6 +2,8 @@ using EventManager.BackgroundServices;
 using EventManager.Common;
 using EventManager.Data.BookingRepository;
 using EventManager.Models;
+using EventManager.Services.EventService;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -12,25 +14,36 @@ public class BookingConfirmationServiceTests
     private readonly Mock<IBookingRepository> _mockRepository;
     private readonly Mock<ILogger<BookingConfirmationService>> _mockLogger;
     private readonly BookingConfirmationService _service;
+    private readonly Mock<IEventService> _mockEventService;
 
     public BookingConfirmationServiceTests()
     {
         _mockRepository = new Mock<IBookingRepository>();
         _mockLogger = new Mock<ILogger<BookingConfirmationService>>();
-        _service = new BookingConfirmationService(_mockRepository.Object, _mockLogger.Object);
+        _mockEventService = new Mock<IEventService>();
+
+        var services = new ServiceCollection();
+        services.AddScoped(_ => _mockEventService.Object);
+        var serviceProvider = services.BuildServiceProvider();
+        var realServiceFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
+
+        _service = new BookingConfirmationService(_mockRepository.Object, _mockLogger.Object, realServiceFactory);
     }
 
     [Fact]
     public async Task ExecuteAsync_SinglePendingBooking_UpdateBookingStatus()
     {
         //Arrange
-        var eventId = Guid.NewGuid();
-        var booking = new Booking(eventId);
+        var evt = Event.Create("Test Event", DateTime.Now, DateTime.Now.AddHours(2), 5);
+        var booking = new Booking(evt.Id);
         List<Booking> pendingBookings = [booking];
 
         var ct = new CancellationTokenSource();
-        _mockRepository.Setup((r) => r.GetBookings(BookingStatus.Pending))
-                       .ReturnsAsync(pendingBookings.AsReadOnly());
+        _mockEventService.Setup(r => r.GetEventById(evt.Id)).Returns(evt);
+        _mockRepository.Setup(r => r.GetBookings(BookingStatus.Pending))
+            .ReturnsAsync(pendingBookings.AsReadOnly());
+        _mockRepository.Setup(r => r.UpdateBooking(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(booking);
 
         //Act
         var exucuteTask = _service.StartAsync(ct.Token);
@@ -50,17 +63,23 @@ public class BookingConfirmationServiceTests
     public async Task ExecuteAsync_MultiplePendingBooking_UpdateBookingStatus()
     {
         //Arrange
-        var firstEventId = Guid.NewGuid();
-        var secondEventId = Guid.NewGuid();
-        var thirdEventId = Guid.NewGuid();
+        var firstEvt = Event.Create("Event 1", DateTime.Now, DateTime.Now.AddHours(2), 5);
+        var secondEvt = Event.Create("Event 2", DateTime.Now, DateTime.Now.AddHours(2), 5);
+        var thirdEvt = Event.Create("Event 3", DateTime.Now, DateTime.Now.AddHours(2), 5);
 
-        var firstBooking = new Booking(firstEventId);
-        var secondBooking = new Booking(secondEventId);
-        var thirdBooking = new Booking(thirdEventId);
+        var firstBooking = new Booking(firstEvt.Id);
+        var secondBooking = new Booking(secondEvt.Id);
+        var thirdBooking = new Booking(thirdEvt.Id);
         List<Booking> pendingBookings = [firstBooking, secondBooking, thirdBooking];
-        _mockRepository.Setup((r) => r.GetBookings(BookingStatus.Pending))
-                       .ReturnsAsync(pendingBookings.AsReadOnly());
+
         var ct = new CancellationTokenSource();
+        _mockEventService.Setup(r => r.GetEventById(firstEvt.Id)).Returns(firstEvt);
+        _mockEventService.Setup(r => r.GetEventById(secondEvt.Id)).Returns(secondEvt);
+        _mockEventService.Setup(r => r.GetEventById(thirdEvt.Id)).Returns(thirdEvt);
+        _mockRepository.Setup(r => r.GetBookings(BookingStatus.Pending))
+            .ReturnsAsync(pendingBookings.AsReadOnly());
+        _mockRepository.Setup(r => r.UpdateBooking(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Booking b, CancellationToken _) => b);
 
         //Act
         var exucuteTask = _service.StartAsync(ct.Token);

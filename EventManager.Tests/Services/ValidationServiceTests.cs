@@ -19,12 +19,14 @@ public class ValidationServiceTests
     public void ValidateEventDTO_ValidEventDTOWithDescription_ShouldReturnNothing()
     {
         // Arrange
-        var validEventDTO = new EventDTO()
+        var validEventDTO = new EventInfoDTO()
         {
             Title = "Title",
             Description = "Description",
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddHours(1),
+            TotalSeats = 1,
+            AvailableSeats = 1,
         };
 
         //Act
@@ -38,11 +40,13 @@ public class ValidationServiceTests
     public void ValidateEventDTO_ValidEventDTOWithoutDescription_ShouldReturnNothing()
     {
         // Arrange
-        var validEventDTO = new EventDTO()
+        var validEventDTO = new EventInfoDTO()
         {
             Title = "Title",
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddHours(1),
+            TotalSeats = 1,
+            AvailableSeats = 1,
         };
 
         //Act
@@ -56,11 +60,13 @@ public class ValidationServiceTests
     public void ValidateEventDTO_WhenTitleIsNull_ShouldThrowError()
     {
         // Arrange
-        var eventDTO = new EventDTO
+        var eventDTO = new EventInfoDTO
         {
             Title = null,
             StartAt = DateTime.Now,
-            EndAt = DateTime.Now.AddHours(1)
+            EndAt = DateTime.Now.AddHours(1),
+            TotalSeats = 1,
+            AvailableSeats = 1,
         };
 
         // Act
@@ -68,20 +74,22 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-              .Throw<EventException>()
-              .WithMessage("Название мероприятия не может быть пустым")
-              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Throw<EventException>()
+            .WithMessage("Название мероприятия не может быть пустым")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public void ValidateEventDTO_WhenTitleIsEmptyString_ShouldThrowError()
     {
         // Arrange
-        var eventDTO = new EventDTO
+        var eventDTO = new EventInfoDTO
         {
             Title = string.Empty,
             StartAt = DateTime.Now,
-            EndAt = DateTime.Now.AddHours(1)
+            EndAt = DateTime.Now.AddHours(1),
+            TotalSeats = 1,
+            AvailableSeats = 1,
         };
 
         // Act
@@ -89,20 +97,22 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-              .Throw<EventException>()
-              .WithMessage("Название мероприятия не может быть пустым")
-              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Throw<EventException>()
+            .WithMessage("Название мероприятия не может быть пустым")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public void ValidateEventDTO_WhenTitleIsWhiteSpace_ShouldThrowError()
     {
         // Arrange
-        var eventDTO = new EventDTO
+        var eventDTO = new EventInfoDTO
         {
             Title = "   ",
             StartAt = DateTime.Now,
-            EndAt = DateTime.Now.AddHours(1)
+            EndAt = DateTime.Now.AddHours(1),
+            TotalSeats = 1,
+            AvailableSeats = 1,
         };
 
         // Act
@@ -110,20 +120,22 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-              .Throw<EventException>()
-              .WithMessage("Название мероприятия не может быть пустым")
-              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Throw<EventException>()
+            .WithMessage("Название мероприятия не может быть пустым")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public void ValidateEventDTO_WhenStartAtIsMinValue_ShouldThrowError()
     {
         // Arrange
-        var eventDTO = new EventDTO
+        var eventDTO = new EventInfoDTO
         {
             Title = "Title",
             StartAt = DateTime.MinValue,
-            EndAt = DateTime.Now.AddHours(1)
+            EndAt = DateTime.Now.AddHours(1),
+            TotalSeats = 1,
+            AvailableSeats = 1,
         };
 
         // Act
@@ -131,20 +143,22 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-              .Throw<EventException>()
-              .WithMessage("Дата начала мероприятия должна быть заполнена")
-              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Throw<EventException>()
+            .WithMessage("Дата начала мероприятия должна быть заполнена")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public void ValidateEventDTO_WhenEndAtIsMinValue_ShouldThrowError()
     {
         // Arrange
-        var eventDTO = new EventDTO
+        var eventDTO = new EventInfoDTO
         {
             Title = "Title",
             StartAt = DateTime.Now,
-            EndAt = DateTime.MinValue
+            EndAt = DateTime.MinValue,
+            TotalSeats = 1,
+            AvailableSeats = 1,
         };
 
         // Act
@@ -152,9 +166,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-              .Throw<EventException>()
-              .WithMessage("Дата конца мероприятия должна быть заполнена")
-              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Throw<EventException>()
+            .WithMessage("Дата конца мероприятия должна быть заполнена")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -162,11 +176,13 @@ public class ValidationServiceTests
     {
         // Arrange
         var fixedDate = DateTime.Now;
-        var eventDTO = new EventDTO
+        var eventDTO = new EventInfoDTO
         {
             Title = "Title",
             StartAt = fixedDate,
-            EndAt = fixedDate
+            EndAt = fixedDate,
+            TotalSeats = 1,
+            AvailableSeats = 1,
         };
 
         // Act
@@ -174,20 +190,22 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-              .Throw<EventException>()
-              .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
-              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Throw<EventException>()
+            .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public void ValidateEventDTO_WhenStartAtIsAfterEndAt_ShouldThrowError()
     {
         // Arrange
-        var eventDTO = new EventDTO
+        var eventDTO = new EventInfoDTO()
         {
             Title = "Title",
             StartAt = DateTime.Now.AddHours(2),
-            EndAt = DateTime.Now
+            EndAt = DateTime.Now,
+            TotalSeats = 1,
+            AvailableSeats = 1,
         };
 
         // Act
@@ -195,8 +213,101 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-              .Throw<EventException>()
-              .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
-              .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Throw<EventException>()
+            .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public void ValidateEventDTO_WhenZeroTotalSeats_ShouldThrowError()
+    {
+        // Arrange
+        var eventDTO = new EventInfoDTO()
+        {
+            Title = "Title",
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now.AddHours(2),
+            TotalSeats = 0,
+            AvailableSeats = 1,
+        };
+
+        // Act
+        var result = () => _validationService.ValidateEventDTO(eventDTO);
+
+        // Assert
+        result.Should()
+            .Throw<EventException>()
+            .WithMessage("Количество мест должно быть больше 0")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+    }
+    
+    
+    [Fact]
+    public void ValidateEventDTO_WhenNegativeTotalSeats_ShouldThrowError()
+    {
+        // Arrange
+        var eventDTO = new EventInfoDTO()
+        {
+            Title = "Title",
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now.AddHours(2),
+            TotalSeats = -5,
+            AvailableSeats = 1,
+        };
+
+        // Act
+        var result = () => _validationService.ValidateEventDTO(eventDTO);
+
+        // Assert
+        result.Should()
+            .Throw<EventException>()
+            .WithMessage("Количество мест должно быть больше 0")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+    }
+    
+    [Fact]
+    public void ValidateEventDTO_WhenNegativeAvailableSeats_ShouldThrowError()
+    {
+        // Arrange
+        var eventDTO = new EventInfoDTO()
+        {
+            Title = "Title",
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now.AddHours(2),
+            TotalSeats = 5,
+            AvailableSeats = -5,
+        };
+
+        // Act
+        var result = () => _validationService.ValidateEventDTO(eventDTO);
+
+        // Assert
+        result.Should()
+            .Throw<EventException>()
+            .WithMessage("Количество доступных мест должно быть не меньше 0")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+    }
+    
+    [Fact]
+    public void ValidateEventDTO_WhenAvailableSeatsIsBiggerThanTotalSeats_ShouldThrowError()
+    {
+        // Arrange
+        var eventDTO = new EventInfoDTO()
+        {
+            Title = "Title",
+            StartAt = DateTime.Now,
+            EndAt = DateTime.Now.AddHours(2),
+            TotalSeats = 5,
+            AvailableSeats = 10,
+        };
+
+        // Act
+        var result = () => _validationService.ValidateEventDTO(eventDTO);
+
+        // Assert
+        result.Should()
+            .Throw<EventException>()
+            .WithMessage("Количество доступных мест не может быть больше мест всего")
+            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
     }
 }

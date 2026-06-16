@@ -16,7 +16,7 @@ public class Booking
         Id = Guid.NewGuid();
         EventId = eventId;
         Status = BookingStatus.Pending;
-        CreatedAt = DateTime.UtcNow;
+        CreatedAt = DateTime.UtcNow;    
     }
 
     public bool Confirm()

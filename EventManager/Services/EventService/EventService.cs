@@ -59,13 +59,13 @@ public class EventService : IEventService
         return existing;
     }
 
-    public Event CreateEvent(EventDTO newEvent)
+    public Event CreateEvent(CreateEventDTO newEvent)
     {
         _validation.ValidateEventDTO(newEvent);
         return _repository.CreateEvent(newEvent);
     }
 
-    public Event UpdateEvent(Guid id, EventDTO updatedEvent)
+    public Event UpdateEvent(Guid id, EventInfoDTO updatedEvent)
     {
         _validation.ValidateEventDTO(updatedEvent);
         var existing = _repository.UpdateEvent(id, updatedEvent);

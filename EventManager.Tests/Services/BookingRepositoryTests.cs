@@ -23,8 +23,8 @@ public class BookingRepositoryTests
         // Arrange
         var firstEventId = Guid.NewGuid();
         var secondEventId = Guid.NewGuid();
-        var firstBooking = await _repository.CreateBookingAsync(firstEventId);
-        var secondBooking = await _repository.CreateBookingAsync(secondEventId);
+        var firstBooking = _repository.CreateBookingAsync(firstEventId);
+        var secondBooking = _repository.CreateBookingAsync(secondEventId);
 
         // Act
         var result = await _repository.GetBookings();
@@ -43,9 +43,9 @@ public class BookingRepositoryTests
         var firstEvent = Guid.NewGuid();
         var secondEvent = Guid.NewGuid();
         var thirdEvent = Guid.NewGuid();
-        await _repository.CreateBookingAsync(firstEvent);
-        var secondBooking = await _repository.CreateBookingAsync(secondEvent);
-        var thirdBooking = await _repository.CreateBookingAsync(thirdEvent);
+        _repository.CreateBookingAsync(firstEvent);
+        var secondBooking = _repository.CreateBookingAsync(secondEvent);
+        var thirdBooking = _repository.CreateBookingAsync(thirdEvent);
 
         secondBooking.Confirm();
         thirdBooking.Reject();
@@ -69,7 +69,7 @@ public class BookingRepositoryTests
     {
         // Arrange
         var eventId = Guid.NewGuid();
-        await _repository.CreateBookingAsync(eventId);
+        _repository.CreateBookingAsync(eventId);
 
         // Act
         var result = await _repository.GetBookings(BookingStatus.Rejected);
@@ -95,7 +95,7 @@ public class BookingRepositoryTests
     {
         // Arrange
         var eventId = Guid.NewGuid();
-        var createdBooking = await _repository.CreateBookingAsync(eventId);
+        var createdBooking = _repository.CreateBookingAsync(eventId);
 
         // Act
         var result = await _repository.GetBookingByIdAsync(createdBooking.Id);
@@ -128,7 +128,7 @@ public class BookingRepositoryTests
     {
         // Arrange
         var eventId = Guid.NewGuid();
-        var booking = await _repository.CreateBookingAsync(eventId);
+        var booking = _repository.CreateBookingAsync(eventId);
         booking.Confirm();
         await _repository.UpdateBooking(booking);
 
@@ -149,7 +149,7 @@ public class BookingRepositoryTests
         var eventId = Guid.NewGuid();
 
         // Act
-        var result = await _repository.CreateBookingAsync(eventId);
+        var result = _repository.CreateBookingAsync(eventId);
 
         // Assert
         result.Should().NotBeNull();
@@ -165,7 +165,7 @@ public class BookingRepositoryTests
     {
         // Arrange
         var eventId = Guid.NewGuid();
-        var createdBooking = await _repository.CreateBookingAsync(eventId);
+        var createdBooking = _repository.CreateBookingAsync(eventId);
         createdBooking?.Confirm();
 
         // Act
@@ -188,8 +188,8 @@ public class BookingRepositoryTests
 
         // Assert
         result.Should()
-              .ThrowAsync<BookingException>()
-              .WithMessage($"Мероприятия с id {nonExistingBooking.Id} не найдено")
-              .Where((b) => b.statusCode == HttpStatusCode.NotFound);
+            .ThrowAsync<BookingException>()
+            .WithMessage($"Мероприятия с id {nonExistingBooking.Id} не найдено")
+            .Where((b) => b.statusCode == HttpStatusCode.NotFound);
     }
 }

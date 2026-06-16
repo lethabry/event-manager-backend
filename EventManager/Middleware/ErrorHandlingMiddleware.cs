@@ -32,6 +32,10 @@ public class ErrorHandlingMiddleware
         {
             await HandleExceptionAsync(context, ex, (int)ex.statusCode);
         }
+        catch (NoAvailableSeatsException ex)
+        {
+            await HandleExceptionAsync(context, ex, (int)ex.statusCode);
+        }
         catch (Exception ex)
         {
             await HandleExceptionAsync(context, ex, 500);

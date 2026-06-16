@@ -57,7 +57,7 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(Event), StatusCodes.Status201Created)]
     [Produces("application/json")]
     [HttpPost]
-    public IActionResult Post([FromBody] EventDTO newEvent)
+    public IActionResult Post([FromBody] CreateEventDTO newEvent)
     {
         var createdEvent = _eventService.CreateEvent(newEvent);
         return CreatedAtAction(nameof(GetById), new { id = createdEvent.Id }, createdEvent);
@@ -71,7 +71,7 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpPut("{id}")]
-    public IActionResult Put(Guid id, [FromBody] EventDTO changedEvent)
+    public IActionResult Put(Guid id, [FromBody] EventInfoDTO changedEvent)
     {
         var updatedEvent = _eventService.UpdateEvent(id, changedEvent);
         return Ok(updatedEvent);
@@ -95,6 +95,7 @@ public class EventsController : ControllerBase
     /// <param name="eventId">Id мероприятия</param>
     [ProducesResponseType(typeof(BookingDTO), StatusCodes.Status202Accepted)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [HttpPost("{eventId}/book")]
     public async Task<IActionResult> Book(Guid eventId)
     {
