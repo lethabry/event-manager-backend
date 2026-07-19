@@ -77,4 +77,24 @@ public class ValidationService : IValidationService
             throw new EventException(HttpStatusCode.BadRequest, "Количество доступных мест не может быть больше мест всего");
         }
     }
+
+    public void ValidatePaginatedResult(DateTime? from, DateTime? to, int page, int pageSize)
+    {
+        if (from.HasValue && to.HasValue && from.Value >= to.Value)
+        {
+            throw new EventException(
+                HttpStatusCode.BadRequest,
+                "Дата начала мероприятия должны быть раньше даты окончания мероприятия");
+        }
+
+        if (page <= 0)
+        {
+            throw new EventException(HttpStatusCode.BadRequest, "Номер страницы не может быть меньше 1");
+        }
+
+        if (pageSize <= 0)
+        {
+            throw new EventException(HttpStatusCode.BadRequest, "Количество элементов не может быть меньше 1");
+        }
+    }
 }

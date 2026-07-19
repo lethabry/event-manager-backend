@@ -17,40 +17,24 @@ public class EventService : IEventService
         _validation = validation;
     }
 
-    public PaginatedResultDTO<Event> GetEvents(string? title, DateTime? from, DateTime? to, int page, int pageSize)
+    public async Task<PaginatedResultDTO<Event>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize)
     {
-        if (from.HasValue && to.HasValue && from >= to.Value)
-        {
-            throw new EventException(
-                HttpStatusCode.BadRequest,
-                "Дата начала мероприятия должны быть раньше даты окончания мероприятия");
-        }
-
-        if (page <= 0)
-        {
-            throw new EventException(HttpStatusCode.BadRequest, "Номер страницы не может быть меньше 1");
-        }
-
-        if (pageSize <= 0)
-        {
-            throw new EventException(HttpStatusCode.BadRequest, "Количество элементов не может быть меньше 1");
-        }
-
-        var events = _repository.GetEvents(title, from, to);
+        _validation.ValidatePaginatedResult(from, to, page, pageSize);
+        var events = await _repository.GetEventsAsync(title, from, to);
         var paginatedEvents = events.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var result = new PaginatedResultDTO<Event>()
         {
             CurrentPage = page,
-            CurrentPageSize = paginatedEvents.Count,
+            CurrentPageSize = pageSize,
             Result = paginatedEvents,
             TotalAmount = events.Count
         };
         return result;
     }
 
-    public Event GetEventById(Guid id)
+    public async Task<Event?> GetEventByIdAsync(Guid id)
     {
-        var existing = _repository.GetEventById(id);
+        var existing = await _repository.GetEventByIdAsync(id);
         if (existing == null)
         {
             throw new EventException(HttpStatusCode.NotFound, $"Мероприятие с id {id} не найдено");
@@ -59,16 +43,16 @@ public class EventService : IEventService
         return existing;
     }
 
-    public Event CreateEvent(CreateEventDTO newEvent)
+    public async Task<Event?> CreateEventAsync(CreateEventDTO newEvent)
     {
         _validation.ValidateEventDTO(newEvent);
-        return _repository.CreateEvent(newEvent);
+        return await _repository.CreateEventAsync(newEvent);
     }
 
-    public Event UpdateEvent(Guid id, EventInfoDTO updatedEvent)
+    public async Task<Event?> UpdateEventAsync(Guid id, EventInfoDTO updatedEvent)
     {
         _validation.ValidateEventDTO(updatedEvent);
-        var existing = _repository.UpdateEvent(id, updatedEvent);
+        var existing = await _repository.UpdateEventAsync(id, updatedEvent);
 
         if (existing == null)
         {
@@ -78,14 +62,17 @@ public class EventService : IEventService
         return existing;
     }
 
-    public void DeleteEvent(Guid id)
+    public async Task DeleteEventAsync(Guid id)
     {
-        var existing = _repository.GetEventById(id);
+        var existing = await _repository.GetEventByIdAsync(id);
         if (existing == null)
         {
             throw new EventException(HttpStatusCode.NotFound, $"Мероприятие с id {id} не найдено");
         }
-
-        _repository.DeleteEvent(id);
+        var isDeleted = await _repository.DeleteEventAsync(id);
+        if (!isDeleted)
+        {
+            throw new EventException(HttpStatusCode.InternalServerError, "Не удалось удалить мероприятие");
+        }
     }
 }

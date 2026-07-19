@@ -1,3 +1,4 @@
+using System.Net;
 using EventManager.Common;
 using EventManager.Data.BookingRepository;
 using EventManager.Exceptions;
@@ -11,15 +12,13 @@ namespace EventManager.BackgroundServices;
 /// </summary>
 public class BookingConfirmationService : BackgroundService
 {
-    private readonly IBookingRepository _bookingRepository;
     private readonly ILogger<BookingConfirmationService> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
 
     private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
-    public BookingConfirmationService(IBookingRepository bookingRepository, ILogger<BookingConfirmationService> logger, IServiceScopeFactory scopeFactory)
+    public BookingConfirmationService(ILogger<BookingConfirmationService> logger, IServiceScopeFactory scopeFactory)
     {
-        _bookingRepository = bookingRepository;
         _logger = logger;
         _scopeFactory = scopeFactory;
     }
@@ -32,13 +31,16 @@ public class BookingConfirmationService : BackgroundService
         {
             try
             {
-                var pendingBookings = await _bookingRepository.GetBookings(BookingStatus.Pending);
-                var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, stoppingToken));
+                using var scope = _scopeFactory.CreateScope();
+                var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+                var pendingBookings = await bookingRepository.GetBookingsAsync(BookingStatus.Pending);
+                var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking.Id, stoppingToken));
+                _logger.LogInformation("tasks length {0}", tasks.Count());
                 await Task.WhenAll(tasks);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
-                _logger.LogInformation("Сервис ");
+                _logger.LogInformation("Сервис заканчивает работу");
             }
             catch (Exception e)
             {
@@ -51,16 +53,22 @@ public class BookingConfirmationService : BackgroundService
         _logger.LogInformation("BookingConfirmationService остановлен");
     }
 
-    private async Task ProcessBookingAsync(Booking booking, CancellationToken stoppingToken)
+    private async Task ProcessBookingAsync(Guid bookingId, CancellationToken stoppingToken)
     {
         await Task.Delay(AppConstants.DelayBetweenBookingConfirmationHandling, stoppingToken);
         Event? evt = null;
         using var scope = _scopeFactory.CreateScope();
         var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
-        await _processingSemaphore.WaitAsync(stoppingToken);
+        var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+        var booking = await bookingRepository.GetBookingByIdAsync(bookingId);
+        if (booking == null)
+        {
+            throw new BookingException(HttpStatusCode.NotFound, $"Не найдено броинрование с id {bookingId}");
+        }
         try
         {
-            evt = eventService.GetEventById(booking.EventId);
+            evt = await eventService.GetEventByIdAsync(booking.EventId);
+
             if (evt == null)
             {
                 booking.Reject();
@@ -69,8 +77,8 @@ public class BookingConfirmationService : BackgroundService
             else
             {
                 booking.Confirm();
-                await _bookingRepository.UpdateBooking(booking, stoppingToken);
             }
+            await bookingRepository.UpdateBookingAsync(booking, stoppingToken);
         }
         catch (OperationCanceledException)
         {
@@ -79,7 +87,7 @@ public class BookingConfirmationService : BackgroundService
         catch (Exception e)
         {
             booking.Reject();
-            await _bookingRepository.UpdateBooking(booking, stoppingToken);
+            await bookingRepository.UpdateBookingAsync(booking, stoppingToken);
             if (evt != null)
             {
                 evt.ReleaseSeats();
@@ -92,13 +100,9 @@ public class BookingConfirmationService : BackgroundService
                     TotalSeats = evt.TotalSeats,
                     AvailableSeats = evt.AvailableSeats
                 };
-                eventService.UpdateEvent(evt.Id, updatedEvt);
+                await eventService.UpdateEventAsync(evt.Id, updatedEvt);
             }
             _logger.LogError(e.Message, e);
-        }
-        finally
-        {
-            _processingSemaphore.Release();
         }
     }
 }
