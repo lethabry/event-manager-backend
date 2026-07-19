@@ -30,10 +30,10 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(PaginatedResultDTO<Event>), StatusCodes.Status200OK)]
     [Produces("application/json")]
     [HttpGet]
-    public IActionResult GetAll([FromQuery] string? title, DateTime? from, DateTime? to, int page = 1,
+    public async Task<IActionResult> GetAll([FromQuery] string? title, DateTime? from, DateTime? to, int page = 1,
         int pageSize = 10)
     {
-        var events = _eventService.GetEvents(title, from, to, page, pageSize);
+        var events = await _eventService.GetEventsAsync(title, from, to, page, pageSize);
         return Ok(events);
     }
 
@@ -45,9 +45,9 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpGet("{id}")]
-    public IActionResult GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id)
     {
-        var existing = _eventService.GetEventById(id);
+        var existing = await _eventService.GetEventByIdAsync(id);
         return Ok(existing);
     }
 
@@ -57,10 +57,10 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(Event), StatusCodes.Status201Created)]
     [Produces("application/json")]
     [HttpPost]
-    public IActionResult Post([FromBody] CreateEventDTO newEvent)
+    public async Task<IActionResult> Post([FromBody] CreateEventDTO newEvent)
     {
-        var createdEvent = _eventService.CreateEvent(newEvent);
-        return CreatedAtAction(nameof(GetById), new { id = createdEvent.Id }, createdEvent);
+        var createdEvent = await _eventService.CreateEventAsync(newEvent);
+        return CreatedAtAction(nameof(GetById), new { id = createdEvent?.Id }, createdEvent);
     }
 
     /// <summary>
@@ -71,9 +71,9 @@ public class EventsController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpPut("{id}")]
-    public IActionResult Put(Guid id, [FromBody] EventInfoDTO changedEvent)
+    public async Task<IActionResult> Put(Guid id, [FromBody] EventInfoDTO changedEvent)
     {
-        var updatedEvent = _eventService.UpdateEvent(id, changedEvent);
+        var updatedEvent = await _eventService.UpdateEventAsync(id, changedEvent);
         return Ok(updatedEvent);
     }
 
@@ -83,9 +83,9 @@ public class EventsController : ControllerBase
     /// <param name="id">Id мероприятия</param>
     [ProducesResponseType(typeof(Event), StatusCodes.Status204NoContent)]
     [HttpDelete("{id}")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
-        _eventService.DeleteEvent(id);
+        await _eventService.DeleteEventAsync(id);
         return NoContent();
     }
 
@@ -103,7 +103,7 @@ public class EventsController : ControllerBase
         return AcceptedAtAction(
             actionName: nameof(BookingsController.GetById),
             controllerName: "Bookings",
-            routeValues: new { id = booking.Id },
+            routeValues: new { id = booking?.Id },
             value: booking
         );
     }

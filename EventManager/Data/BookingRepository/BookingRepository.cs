@@ -1,50 +1,63 @@
-using System.Collections.Concurrent;
 using System.Net;
 using EventManager.Common;
+using EventManager.Data.DataAccess;
 using EventManager.Exceptions;
 using EventManager.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventManager.Data.BookingRepository;
 
 public class BookingRepository : IBookingRepository
 {
-    private readonly ConcurrentDictionary<Guid, Booking> _bookings;
+    private readonly AppDbContext _appDbContext;
 
-    public BookingRepository()
+    public BookingRepository(AppDbContext appDbContext)
     {
-        _bookings = new ConcurrentDictionary<Guid, Booking>();
+        _appDbContext = appDbContext;
     }
 
     public async Task<Booking?> GetBookingByIdAsync(Guid id)
     {
-        return _bookings.TryGetValue(id, out var booking) ? booking : null;
+        return await _appDbContext.Bookings.FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    public Booking? CreateBookingAsync(Guid eventId)
+    public async Task<Booking?> CreateBookingAsync(Guid eventId)
     {
-        var booking = new Booking(eventId);
-        return _bookings.TryAdd(booking.Id, booking) ? booking : null;
+        try
+        {
+            var booking = new Booking(eventId);
+            _appDbContext.Bookings.Add(booking);
+            await _appDbContext.SaveChangesAsync();
+            return booking;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error occured during creating booking: Exception {e}");
+            throw;
+        }
     }
 
-    public async Task<IReadOnlyList<Booking>> GetBookings(BookingStatus? status = null)
+    public async Task<IReadOnlyList<Booking>> GetBookingsAsync(BookingStatus? status = null)
     {
-        IEnumerable<Booking> result = _bookings.Values;
+        var result = _appDbContext.Bookings.AsQueryable();
         if (status != null)
         {
             result = result.Where((b) => b.Status == status);
         }
 
-        return result.ToList().AsReadOnly();
+        var list = await result.ToListAsync();
+        return list.AsReadOnly();
     }
 
-    public async Task<Booking?> UpdateBooking(Booking updatedBooking, CancellationToken ct = default)
+    public async Task<Booking?> UpdateBookingAsync(Booking updatedBooking, CancellationToken ct = default)
     {
-        var existingBooking = await GetBookingByIdAsync(updatedBooking.Id);
-        if (existingBooking == null)
+        var booking = await GetBookingByIdAsync(updatedBooking.Id);
+        if (booking == null)
         {
             throw new BookingException(HttpStatusCode.NotFound, $"Бронирование с id {updatedBooking.Id} не найдено");
         }
-
-        return _bookings.TryUpdate(updatedBooking.Id, updatedBooking, existingBooking) ? updatedBooking : null;
+        _appDbContext.Update(updatedBooking);
+        await _appDbContext.SaveChangesAsync(ct);
+        return updatedBooking;
     }
 }

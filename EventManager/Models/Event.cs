@@ -11,10 +11,16 @@ public class Event
     public string? Description { get; set; }
     public DateTime StartAt { get; set; }
     public DateTime EndAt { get; set; }
-    public int TotalSeats { get; init; }
-    public int AvailableSeats { get; private set; }
+    public int TotalSeats { get; set; }
+    public int AvailableSeats { get; set; }
+    public List<Booking> Bookings { get; set; }
 
-    public static Event Create(string title, DateTime startAt, DateTime endAt, int totalSeats, string? description = null)
+    private Event()
+    {
+
+    }
+
+    public static Event Create(string title, DateTime startAt, DateTime endAt, int totalSeats, string description = null)
     {
         if (string.IsNullOrWhiteSpace(title))
         {
@@ -39,7 +45,7 @@ public class Event
         };
     }
 
-    public static Event Create(string title, DateTime startAt, DateTime endAt, int totalSeats, int availableSeats, string? description = null)
+    public static Event Create(string title, DateTime startAt, DateTime endAt, int totalSeats, int availableSeats, string description = null)
     {
         if (string.IsNullOrWhiteSpace(title))
         {
@@ -89,6 +95,7 @@ public class Event
     {
         AvailableSeats += count;
     }
+
 }
 
 public class CreateEventDTO

@@ -15,6 +15,61 @@ public class ValidationServiceTests
         _validationService = new ValidationService();
     }
 
+    public static IEnumerable<object[]> PaginatedResultValidTestData()
+    {
+        return
+        [
+            [new DateTime(2026, 4, 12), new DateTime(2026, 4, 13), 1, 2],
+            [new DateTime(2026, 4, 1), DateTime.Now, 2, 2],
+            [null, null, 1, 10],
+            [null, new DateTime(2026, 5, 1), 5, 20],
+            [new DateTime(2026, 5, 1), null, 3, 15],
+            [DateTime.Now, DateTime.Now.AddDays(1), 1, 100],
+            [DateTime.Now.AddDays(-5), DateTime.Now, 10, 5],
+            [null, DateTime.Now.AddDays(30), 999, 1],
+            [DateTime.Now, null, 1, 999],
+        ];
+    }
+
+    public static IEnumerable<object[]> PaginatedResultInvalidDateRangeTestData()
+    {
+        var now = DateTime.Now;
+        return
+        [
+            [new DateTime(2026, 4, 12), new DateTime(2026, 4, 12), 1, 10],
+            [now.AddDays(10), now, 1, 10],
+            [now, now, 1, 10],
+        ];
+    }
+
+    public static IEnumerable<object[]> PaginatedResultInvalidPageTestData()
+    {
+        return
+        [
+            [null, null, 0, 10],
+            [DateTime.Now, DateTime.Now.AddDays(1), 0, 5],
+            [null, null, -1, 10],
+            [DateTime.Now, null, -5, 20],
+            [null, new DateTime(2026, 5, 1), -100, 15],
+            [new DateTime(2026, 4, 1), new DateTime(2026, 4, 30), -1, 10],
+            [null, null, int.MinValue, 10],
+        ];
+    }
+
+    public static IEnumerable<object[]> PaginatedResultInvalidPageSizeTestData()
+    {
+        return
+        [
+            [null, null, 1, 0],
+            [DateTime.Now, DateTime.Now.AddDays(1), 5, 0],
+            [null, null, 1, -1],
+            [new DateTime(2026, 4, 1), null, 3, -5],
+            [null, new DateTime(2026, 5, 1), 1, -100],
+            [new DateTime(2026, 4, 1), new DateTime(2026, 4, 30), 10, -1],
+            [null, null, 1, int.MinValue],
+        ];
+    }
+
     [Fact]
     public void ValidateEventDTO_ValidEventDTOWithDescription_ShouldReturnNothing()
     {
@@ -240,8 +295,8 @@ public class ValidationServiceTests
             .WithMessage("Количество мест должно быть больше 0")
             .Where(e => e.statusCode == HttpStatusCode.BadRequest);
     }
-    
-    
+
+
     [Fact]
     public void ValidateEventDTO_WhenNegativeTotalSeats_ShouldThrowError()
     {
@@ -264,7 +319,7 @@ public class ValidationServiceTests
             .WithMessage("Количество мест должно быть больше 0")
             .Where(e => e.statusCode == HttpStatusCode.BadRequest);
     }
-    
+
     [Fact]
     public void ValidateEventDTO_WhenNegativeAvailableSeats_ShouldThrowError()
     {
@@ -287,7 +342,7 @@ public class ValidationServiceTests
             .WithMessage("Количество доступных мест должно быть не меньше 0")
             .Where(e => e.statusCode == HttpStatusCode.BadRequest);
     }
-    
+
     [Fact]
     public void ValidateEventDTO_WhenAvailableSeatsIsBiggerThanTotalSeats_ShouldThrowError()
     {
@@ -309,5 +364,53 @@ public class ValidationServiceTests
             .Throw<EventException>()
             .WithMessage("Количество доступных мест не может быть больше мест всего")
             .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+    }
+
+    [Theory]
+    [Trait("ValidatePaginatedResult", "Success")]
+    [MemberData(nameof(PaginatedResultValidTestData))]
+    public void ValidatePaginatedResult_DataValidate_ShouldReturNothing(DateTime? from, DateTime? to, int page, int pageSize)
+    {
+        // Act
+        var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
+
+        // Assert
+        result.Should().NotThrow<EventException>();
+    }
+
+    [Theory]
+    [Trait("ValidatePaginatedResult", "ThrowException")]
+    [MemberData(nameof(PaginatedResultInvalidDateRangeTestData))]
+    public void ValidatePaginatedResult_InvalidDateRange_ShouldThrowException(DateTime? from, DateTime? to, int page, int pageSize)
+    {
+        // Act
+        var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
+
+        // Assert
+        result.Should().Throw<EventException>().Where(e => e.statusCode == HttpStatusCode.BadRequest).WithMessage("Дата начала мероприятия должны быть раньше даты окончания мероприятия");
+    }
+
+    [Theory]
+    [Trait("ValidatePaginatedResult", "ThrowException")]
+    [MemberData(nameof(PaginatedResultInvalidPageSizeTestData))]
+    public void ValidatePaginatedResult_InvalidPageSize_ShouldThrowException(DateTime? from, DateTime? to, int page, int pageSize)
+    {
+        // Act
+        var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
+
+        // Assert
+        result.Should().Throw<EventException>().Where(e => e.statusCode == HttpStatusCode.BadRequest).WithMessage("Количество элементов не может быть меньше 1");
+    }
+
+    [Theory]
+    [Trait("ValidatePaginatedResult", "ThrowException")]
+    [MemberData(nameof(PaginatedResultInvalidPageTestData))]
+    public void ValidatePaginatedResult_InvalidPage_ShouldThrowException(DateTime? from, DateTime? to, int page, int pageSize)
+    {
+        // Act
+        var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
+
+        // Assert
+        result.Should().Throw<EventException>().Where(e => e.statusCode == HttpStatusCode.BadRequest).WithMessage("Номер страницы не может быть меньше 1");
     }
 }

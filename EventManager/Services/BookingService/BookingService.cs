@@ -8,9 +8,9 @@ namespace EventManager.Services.BookingService;
 
 public class BookingService : IBookingService
 {
-    private readonly object _bookingLock = new();
     private IBookingRepository _bookingRepository;
     private IEventService _eventService;
+    private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
     public BookingService(IBookingRepository bookingRepository, IEventService eventService)
     {
@@ -31,36 +31,43 @@ public class BookingService : IBookingService
 
     public async Task<BookingDTO?> CreateBookingAsync(Guid eventId)
     {
-        Booking? booking;
-        lock (_bookingLock)
+        Booking? booking = null;
+        var evt = await _eventService.GetEventByIdAsync(eventId);
+        await _processingSemaphore.WaitAsync();
+        try
         {
-            var evt = _eventService.GetEventById(eventId);
-            var isBookingAvailable = evt.TryReserveSeats();
-            if (isBookingAvailable)
+            if (evt != null)
             {
-                var evtDTO = new EventInfoDTO()
+                var isBookingAvailable = evt.TryReserveSeats();
+                Console.WriteLine($"IsBookingAvailable: {isBookingAvailable}");
+                if (isBookingAvailable)
                 {
-                    Title = evt.Title,
-                    Description = string.IsNullOrEmpty(evt.Description) ? null : evt.Description,
-                    AvailableSeats = evt.AvailableSeats,
-                    TotalSeats = evt.TotalSeats,
-                    StartAt = evt.StartAt,
-                    EndAt = evt.EndAt,
-                };
-                booking = _bookingRepository.CreateBookingAsync(eventId);
-                _eventService.UpdateEvent(evt.Id, evtDTO);
+                    var evtDTO = new EventInfoDTO()
+                    {
+                        Title = evt.Title,
+                        Description = string.IsNullOrEmpty(evt.Description) ? null : evt.Description,
+                        AvailableSeats = evt.AvailableSeats,
+                        TotalSeats = evt.TotalSeats,
+                        StartAt = evt.StartAt,
+                        EndAt = evt.EndAt,
+                    };
+                    booking = await _bookingRepository.CreateBookingAsync(eventId);
+                    await _eventService.UpdateEventAsync(evt.Id, evtDTO);
+                }
+                else
+                {
+                    throw new NoAvailableSeatsException(HttpStatusCode.Conflict, "No available seats for this event");
+                }
             }
-            else
+            if (booking == null)
             {
-                throw new NoAvailableSeatsException(HttpStatusCode.Conflict, "No available seats for this event");
+                throw new BookingException(HttpStatusCode.Conflict, "Не удалось создать бронирование");
             }
-
         }
-        if (booking == null)
+        finally
         {
-            throw new BookingException(HttpStatusCode.Conflict, "Не удалось создать бронирование");
+            _processingSemaphore.Release();
         }
-
         return new BookingDTO(booking);
     }
 }

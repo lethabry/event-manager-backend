@@ -1,30 +1,24 @@
-using System.Collections.Concurrent;
+using EventManager.Data.DataAccess;
 using EventManager.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventManager.Data.EventRepository;
 
 public class EventRepository : IEventRepository
 {
-    private readonly ConcurrentDictionary<Guid, Event> _events;
+    private readonly AppDbContext _appDbContext;
 
-    public EventRepository()
+    public EventRepository(AppDbContext appDbContext)
     {
-        var eventList = new[]
-        {
-            Event.Create("Премьера: 'Дюна: Часть вторая' (IMAX)", new DateTime(2026, 4, 22, 19, 0, 0), new DateTime(2026, 4, 22, 22, 15, 0), 50, "Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами."),
-            Event.Create("Ночь в кино: Трилогия 'Назад в будущее'", new DateTime(2026, 4, 25, 23, 0, 0), new DateTime(2026, 4, 26, 5, 0, 0), 100, "Марафон всех трех частей с перерывом на пиццу. Начало в 23:00. Вход 500₽."),
-            Event.Create("Опера 'Кармен' (Новая сцена)", new DateTime(2026, 5, 12, 19, 0, 0), new DateTime(2026, 5, 12, 22, 30, 0), 150, "Дирижер — приглашенный маэстро из Ла Скала. Дресс-код: вечерний."),
-            Event.Create("Закрытый показ: 'Мастер и Маргарита' (режиссерская версия)", new DateTime(2026, 5, 14, 20, 0, 0), new DateTime(2026, 5, 14, 23, 0, 0), 200, "Только для членов клуба. После показа — Q&A с режиссером."),
-        };
-        _events = new ConcurrentDictionary<Guid, Event>(eventList.ToDictionary((e) => e.Id, (e) => e));
+        _appDbContext = appDbContext;
     }
 
-    public IReadOnlyCollection<Event> GetEvents(string? title, DateTime? from, DateTime? to)
+    public async Task<IReadOnlyList<Event>> GetEventsAsync(string? title, DateTime? from, DateTime? to)
     {
-        IEnumerable<Event> result = _events.Values.ToList();
+        var result = _appDbContext.Events.AsQueryable();
         if (!string.IsNullOrEmpty(title))
         {
-            result = result.Where((evt) => evt.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+            result = result.Where((evt) => evt.Title.ToLower().Contains(title.ToLower()));
         }
 
         if (from.HasValue)
@@ -40,38 +34,53 @@ public class EventRepository : IEventRepository
         return result.ToList().AsReadOnly();
     }
 
-    public Event? GetEventById(Guid id)
+    public async Task<Event?> GetEventByIdAsync(Guid id)
     {
-        return _events.TryGetValue(id, out var value) ? value : null;
+        return await _appDbContext.Events.Select(e => e).Where(e => e.Id == id).FirstOrDefaultAsync();
     }
 
-    public Event? CreateEvent(CreateEventDTO newEvent)
+    public async Task<Event?> CreateEventAsync(CreateEventDTO newEvent)
     {
-        var updatedEvent = Event.Create(newEvent.Title, newEvent.StartAt, newEvent.EndAt, newEvent.TotalSeats, string.IsNullOrEmpty(newEvent.Description) ? null : newEvent.Description);
-        return _events.TryAdd(updatedEvent.Id, updatedEvent) ? updatedEvent : null;
-    }
-
-    public Event? UpdateEvent(Guid id, EventInfoDTO eventDto)
-    {
-        while (true)
+        try
         {
-            _events.TryGetValue(id, out var existingEvent);
-            if (existingEvent == null)
-            {
-                return null;
-            }
-
-            var updatedEvent = Event.Create(eventDto.Title, eventDto.StartAt, eventDto.EndAt, eventDto.TotalSeats, eventDto.AvailableSeats, eventDto.Description);
-            var result = _events.TryUpdate(id, updatedEvent, existingEvent);
-            if (result)
-            {
-                return updatedEvent;
-            }
+            var createdEvent = Event.Create(newEvent.Title, newEvent.StartAt, newEvent.EndAt, newEvent.TotalSeats, string.IsNullOrEmpty(newEvent.Description) ? null : newEvent.Description);
+            _appDbContext.Events.Add(createdEvent);
+            await _appDbContext.SaveChangesAsync();
+            return createdEvent;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error occured during creating event: Exception {e}");
+            throw;
         }
     }
 
-    public bool DeleteEvent(Guid id)
+    public async Task<Event?> UpdateEventAsync(Guid id, EventInfoDTO eventDto)
     {
-        return _events.TryRemove(id, out _);
+        var evt = _appDbContext.Events.FirstOrDefault(e => e.Id == id);
+        if (evt == null)
+        {
+            return null;
+        }
+        evt.Title = eventDto.Title;
+        evt.StartAt = eventDto.StartAt;
+        evt.EndAt = eventDto.EndAt;
+        evt.TotalSeats = eventDto.TotalSeats;
+        evt.AvailableSeats = eventDto.AvailableSeats;
+        evt.Description = eventDto.Description;
+        await _appDbContext.SaveChangesAsync();
+        return evt;
+    }
+
+    public async Task<bool> DeleteEventAsync(Guid id)
+    {
+        var evt = _appDbContext.Events.FirstOrDefault(e => e.Id == id);
+        if (evt == null)
+        {
+            return false;
+        }
+        _appDbContext.Events.Remove(evt);
+        await _appDbContext.SaveChangesAsync();
+        return true;
     }
 }
