@@ -31,7 +31,7 @@ public class EventRepositoryTests : IAsyncLifetime
             .Options;
 
         var context = new AppDbContext(options);
-        context.Database.EnsureCreated();
+        context.Database.Migrate();
         return context;
     }
 
