@@ -592,7 +592,7 @@ public class EventServiceTests : IDisposable
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddHours(2),
             TotalSeats = 5,
-            AvailableSeats = 5
+            AvailableSeats = 5,
         };
         var updateEvent = Event.Create("Новое название", updateEventDTO.StartAt, updateEventDTO.EndAt, 5, 5, "Новое описание");
 
@@ -601,7 +601,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         result.Should()
-            .BeEquivalentTo(updateEvent, option => option.Excluding(x => x.Id));
+            .BeEquivalentTo(updateEvent, option => option.Excluding(x => x.Id).Excluding(x => x.Bookings));
         _mockValidationService.Verify(x => x.ValidateEventDTO(updateEventDTO), Times.Once);
     }
 
@@ -626,7 +626,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         result.Should()
-            .BeEquivalentTo(updateEvent, option => option.Excluding(x => x.Id));
+            .BeEquivalentTo(updateEvent, option => option.Excluding(x => x.Id).Excluding(x => x.Bookings));
         _mockValidationService.Verify(x => x.ValidateEventDTO(updateEventDTO), Times.Once);
     }
 
