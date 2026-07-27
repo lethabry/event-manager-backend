@@ -225,7 +225,7 @@ public class BookingServiceTests : IDisposable
 
         //Assert
         result.Should().BeEquivalentTo(bookingDTO);
-        result.Status.Should().Be("pending");
+        result.Status.Should().Be("Pending");
         result.ProcessedAt.Should().BeNull();
     }
 
@@ -245,7 +245,7 @@ public class BookingServiceTests : IDisposable
 
         //Assert
         result.Should().BeEquivalentTo(bookingDTO);
-        result.Status.Should().Be("confirmed");
+        result.Status.Should().Be("Confirmed");
         result.ProcessedAt.Should().NotBeNull().And.BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 
@@ -265,7 +265,7 @@ public class BookingServiceTests : IDisposable
 
         //Assert
         result.Should().BeEquivalentTo(bookingDTO);
-        result.Status.Should().Be("rejected");
+        result.Status.Should().Be("Rejected");
         result.ProcessedAt.Should().NotBeNull().And.BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 

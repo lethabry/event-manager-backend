@@ -8,6 +8,7 @@ public class Booking
 {
     public Guid Id { get; init; }
     public Guid EventId { get; init; }
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public BookingStatus Status { get; private set; }
     public DateTime CreatedAt { get; init; }
     public DateTime? ProcessedAt { get; private set; }
@@ -62,7 +63,7 @@ public record BookingDTO
     {
         Id = booking.Id;
         EventId = booking.EventId;
-        Status = Enum.GetName(typeof(BookingStatus), booking.Status)?.ToLower();
+        Status = booking.Status.ToString();
         ProcessedAt = booking.ProcessedAt;
     }
 }

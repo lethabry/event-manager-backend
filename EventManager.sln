@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventManager", "EventManage
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventManager.Tests", "EventManager.Tests\EventManager.Tests.csproj", "{4D3FE1F5-C39D-4490-9430-62C5CF2C5E9A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventManager.IntegrationTests", "EventManager.IntegrationTests\EventManager.IntegrationTests.csproj", "{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{4D3FE1F5-C39D-4490-9430-62C5CF2C5E9A}.Release|x64.Build.0 = Release|Any CPU
 		{4D3FE1F5-C39D-4490-9430-62C5CF2C5E9A}.Release|x86.ActiveCfg = Release|Any CPU
 		{4D3FE1F5-C39D-4490-9430-62C5CF2C5E9A}.Release|x86.Build.0 = Release|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Debug|x64.Build.0 = Debug|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Debug|x86.Build.0 = Debug|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Release|x64.ActiveCfg = Release|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Release|x64.Build.0 = Release|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Release|x86.ActiveCfg = Release|Any CPU
+		{5FFD4B90-1BC6-4C10-A3DC-7E58E6796A01}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

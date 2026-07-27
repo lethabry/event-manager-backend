@@ -31,12 +31,12 @@ public class EventRepository : IEventRepository
             result = result.Where((evt) => evt.EndAt <= to.Value);
         }
 
-        return result.ToList().AsReadOnly();
+        return result.Include(e => e.Bookings).ToList().AsReadOnly();
     }
 
     public async Task<Event?> GetEventByIdAsync(Guid id)
     {
-        return await _appDbContext.Events.Select(e => e).Where(e => e.Id == id).FirstOrDefaultAsync();
+        return await _appDbContext.Events.Select(e => e).Where(e => e.Id == id).Include(e => e.Bookings).FirstOrDefaultAsync();
     }
 
     public async Task<Event?> CreateEventAsync(CreateEventDTO newEvent)
@@ -57,7 +57,7 @@ public class EventRepository : IEventRepository
 
     public async Task<Event?> UpdateEventAsync(Guid id, EventInfoDTO eventDto)
     {
-        var evt = _appDbContext.Events.FirstOrDefault(e => e.Id == id);
+        var evt = _appDbContext.Events.Include(e => e.Bookings).FirstOrDefault(e => e.Id == id);
         if (evt == null)
         {
             return null;
