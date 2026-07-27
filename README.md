@@ -1,264 +1,297 @@
 # Event Manager — backend
 
-**Описание**
+## Описание
 
-- **Проект**: ASP.NET Core Web API для управления мероприятиями и бронированиями.
-- **Функции**: получение, фильтрация, пагинация, создание, обновление, удаление и валидация мероприятий.
-- **Дополнительно**: система бронирования с автоматическим подтверждением через фоновый сервис, глобальная обработка ошибок через middleware и модульное покрытие сервисов.
+ASP.NET Core Web API для управления мероприятиями и бронированиями, построенный на принципах чистой архитектуры (Clean Architecture).
 
-**Ключевые изменения**
+**Основные функции:**
 
-- Добавлены поля `TotalSeats` и `AvailableSeats` в модель `Event`.
-- `POST /events/{id}/book` может возвращать `409 Conflict`, если на мероприятии нет доступных мест.
-- Реализованы простые примитивы синхронизации (блокировки, `SemaphoreSlim`) для защиты от гонок при бронировании и обработке фоновых задач.
+- CRUD операции для мероприятий с фильтрацией и пагинацией
+- Система бронирования с автоматическим подтверждением через фоновый сервис
+- Глобальная обработка ошибок через middleware
+- Синхронизация и защита от гонок при одновременных бронированиях
 
-**Требования**
+## Требования
 
-- **.NET SDK**: установите .NET 10 (проверить: `dotnet --version`, ожидается `10.x`).
-- **PostgreSQL**: для запуска приложения требуется работающий сервер PostgreSQL — приложение подключается к нему через провайдер Npgsql. Можно установить PostgreSQL локально или поднять его в Docker (см. `docker-compose.yml` в корне репозитория: `docker compose up -d` запускает `postgres:16-alpine` на порту `5433`).
+- **.NET SDK**: .NET 10
+- **PostgreSQL**: локально или в Docker (см. `docker-compose.yml`)
 
-**Настройка строки подключения**
+## Быстрый старт
 
-- Строка подключения к базе данных задаётся в `EventManager/appsettings.json` в секции `ConnectionStrings:DefaultConnection`.
-- Отредактируйте `Host`, `Port`, `Database`, `Username` и `Password` под свой экземпляр PostgreSQL. Значения по умолчанию совпадают с настройками `docker-compose.yml`, поэтому при запуске БД через `docker compose up -d` менять ничего не требуется.
-- Строку подключения также можно переопределить через переменные окружения или `appsettings.Development.json` без изменения основного файла.
+### 1. Запустить PostgreSQL
 
-**Схема БД и миграции EF Core**
-
-- Схема базы данных управляется миграциями EF Core. Актуальные миграции находятся в каталоге `EventManager/Migrations`, поэтому структуру БД не нужно изменять вручную SQL-скриптами.
-- При старте приложения в `Program.cs` вызывается `db.Database.Migrate()`: приложение применяет ожидающие миграции к PostgreSQL автоматически, если база доступна по строке подключения.
-- Для локальной разработки можно создавать и применять миграции вручную через `dotnet ef` из корня репозитория.
-
-Установить инструмент EF Core CLI, если он ещё не установлен:
-
-```
-dotnet tool install --global dotnet-ef
+```bash
+docker compose up -d
 ```
 
-Создать новую миграцию после изменения моделей или конфигураций EF Core:
+### 2. Запустить приложение
 
-```
-dotnet ef migrations add <MigrationName> --project EventManager --startup-project EventManager --output-dir Migrations
-```
-
-Применить миграции к базе данных из `ConnectionStrings:DefaultConnection`:
-
-```
-dotnet ef database update --project EventManager --startup-project EventManager
-```
-
-**Как запустить локально**
-
-- Убедитесь, что PostgreSQL запущен и доступен по адресу из строки подключения (например, `docker compose up -d` из корня репозитория).
-- Откройте терминал в корне репозитория и выполните:
-
-```
-cd EventManager
+```bash
 dotnet restore
 dotnet build
-dotnet run
+dotnet run --project EventManager.Presentation
 ```
 
-- По умолчанию приложение запустится на локальных адресах (см. вывод консоли), обычно `https://localhost:5001` и `http://localhost:5000`.
-- При старте приложение автоматически применит миграции EF Core (см. раздел «Схема БД и миграции EF Core»).
-- В среде разработки включён Swagger UI — откройте `/swagger` для интерактивной документации.
+Приложение будет доступно на `https://localhost:5001` и `http://localhost:5000`.
 
-**API Endpoints**
+Swagger UI доступен на `/swagger`.
 
-**Мероприятия**
+## Конфигурация
 
-- **Базовый путь**: `/events`
+Строка подключения к БД находится в [EventManager.Presentation/appsettings.json](EventManager.Presentation/appsettings.json) в разделе `ConnectionStrings:DefaultConnection`. Значения по умолчанию совпадают с `docker-compose.yml`, поэтому менять не требуется.
 
-- `GET /events`
+## API Endpoints
 
-  - Получить список всех мероприятий с фильтрацией и пагинацией
-  - Параметры фильтрации: `title`, `from`, `to`
-  - Параметры пагинации: `page` (по умолчанию 1), `pageSize` (по умолчанию 10)
-  - Возвращает: `200 OK` с `PaginatedResultDTO<Event>`
+### Мероприятия
 
-- `GET /events/{id}`
+**Базовый путь**: `/events`
 
-  - Получить мероприятие по ID
-  - Возвращает: `200 OK` с `EventDTO` или `404 Not Found`
+- `GET /events` — получить список мероприятий с фильтрацией и пагинацией
+  - Параметры: `title`, `from`, `to`, `page` (по умолчанию 1), `pageSize` (по умолчанию 10)
+  - Ответ: `200 OK` с `PaginatedResultDTO<Event>`
 
-- `POST /events`
+- `GET /events/{id}` — получить мероприятие по ID
+  - Ответ: `200 OK` с `EventDTO` или `404 Not Found`
 
-  - Создать новое мероприятие
-  - Тело запроса: `EventDTO` с `Title`, `Description`, `StartAt`, `EndAt`, `TotalSeats`
-  - Возвращает: `201 Created`
+- `POST /events` — создать новое мероприятие
+  - Тело: `CreateEventDTO` с полями `Title`, `Description`, `StartAt`, `EndAt`, `TotalSeats`
+  - Ответ: `201 Created`
   - Ошибка валидации: `400 Bad Request`
 
-- `PUT /events/{id}`
+- `PUT /events/{id}` — обновить мероприятие
+  - Тело: `CreateEventDTO`
+  - Ответ: `200 OK` или `404 Not Found`
 
-  - Обновить существующее мероприятие
-  - Тело запроса: `EventDTO`
-  - Возвращает: `200 OK` или `404 Not Found`
-  - Применяется такая же валидация, как при создании
+- `DELETE /events/{id}` — удалить мероприятие
+  - Ответ: `204 No Content` или `404 Not Found`
 
-- `DELETE /events/{id}`
+- `POST /events/{id}/book` — создать бронирование
+  - Ответ: `202 Accepted` с `BookingDTO`
+  - Если нет мест: `409 Conflict`
+  - Если не найдено: `404 Not Found`
 
-  - Удалить мероприятие
-  - Возвращает: `204 No Content` или `404 Not Found`
+### Бронирования
 
-- `POST /events/{id}/book`
+**Базовый путь**: `/bookings`
 
-  - Создать бронирование для мероприятия
-  - Возвращает: `202 Accepted` с `BookingDTO` в теле
-  - Заголовок `Location` указывает на `GET /bookings/{id}`
-  - Если мероприятие не найдено: `404 Not Found`
-  - Если свободных мест нет: `409 Conflict` (см. раздел "Овербукинг" и "Синхронизация")
+- `GET /bookings/{id}` — получить бронирование по ID
+  - Ответ: `200 OK` с `BookingDTO` или `404 Not Found`
 
-**Бронирования**
+## Модели данных
 
-- **Базовый путь**: `/bookings`
+**Модель Event:**
 
-- `GET /bookings/{id}`
+- `Id` — GUID
+- `Title` — название (обязательное)
+- `Description` — описание (опционально)
+- `StartAt` — дата начала
+- `EndAt` — дата окончания
+- `TotalSeats` — общее количество мест
+- `AvailableSeats` — свободные места
 
-  - Получить бронирование по ID
-  - Возвращает: `200 OK` с `BookingDTO` или `404 Not Found`
+**Статусы бронирования:**
+| Статус | Описание |
+|--------|---------|
+| `Pending` | Ожидает подтверждения |
+| `Confirmed` | Подтверждено |
+| `Rejected` | Отклонено |
 
-**Модель бронирования включает поля:**
+## Архитектура (Clean Architecture)
 
-- `Id` — уникальный идентификатор бронирования
-- `EventId` — идентификатор связанного мероприятия
-- `Status` — текущий статус (`Pending`, `Confirmed`, `Rejected`)
-- `CreatedAt` — время создания бронирования
-- `ProcessedAt` — время обработки после изменения статуса
-
-**Модель мероприятия (`Event`)**
-
-- `Id` — уникальный идентификатор мероприятия (GUID), задаётся при создании
-- `Title` — название мероприятия (обязательное поле)
-- `Description` — дополнительное описание мероприятия (опционально)
-- `StartAt` — дата и время начала мероприятия
-- `EndAt` — дата и время окончания мероприятия
-- `TotalSeats` — общее число мест на мероприятии
-- `AvailableSeats` — текущее число свободных мест
-
-**Статусы бронирований**
-
-| Статус      | Описание                                    |
-| ----------- | ------------------------------------------- |
-| `Pending`   | Бронирование создано, ожидает подтверждения |
-| `Confirmed` | Бронирование подтверждено сервисом          |
-| `Rejected`  | Бронирование отклонено                      |
-
-**Полный сценарий**
-
-1. `POST /events` — создайте новое мероприятие.
-2. `POST /events/{id}/book` — создайте бронирование для мероприятия.
-3. `GET /bookings/{bookingId}` — получите бронирование; на этом этапе оно будет в статусе `Pending`.
-4. Дождитесь обработки фонового сервиса: он делает `Task.Delay(2000)` перед подтверждением каждой заявки и повторяет проверку каждые 15 секунд. Если во время обработки возникнет ошибка, бронь переёдет в статус `Rejected`, а количество доступных мест `AvailableSeats` увеличится. При штатной работе статус сменитсся на `Confirmed`
-5. `GET /bookings/{bookingId}` — для проверки текущего статуса бронирования. После обработки фоновой службой статус бронирования будет `Confirmed` или `Rejected`.
-
-
-**Особенности реализации**
-
-- **Контроллеры**:
-
-  - `EventsController` — реализует CRUD операции для мероприятий и запросы с фильтрацией/пагинацией
-  - `BookingsController` — управляет бронированиями событий
-
-- **Сервисы бизнес-логики**:
-
-  - `EventService` — содержит основную логику для работы с мероприятиями, обрабатывает ошибки через `EventException`
-  - `BookingService` — содержит логику для работы с бронированиями, обрабатывает ошибки через `BookingException`
-  - `ValidationService` — проверяет `EventDTO` на корректность заголовка, дат и диапазона
-
-- **Обработка ошибок**:
-
-  - `ErrorHandlingMiddleware` — глобальная обработка исключений. Перехватывает непойманные исключения в конвейере ASP.NET Core и возвращает структурированный JSON в формате `ProblemDetails` с корректным HTTP-статусом и сообщением ошибки.
-
-- **Хранилище данных**:
-
-  - `IEventRepository` / `EventRepository` — абстрагирует работу с данными мероприятий
-  - `IBookingRepository` / `BookingRepository` — абстрагирует работу с данными бронирований
-
-- **Фоновые сервисы**:
-
-  - `BookingConfirmationService` — периодически проверяет бронирования со статусом `Pending`, ждёт 2 секунды перед подтверждением каждого и на данном этапе автоматически подтверждает их в статус `Confirmed`
-
-**Синхронизация и защита от гонок**
-
-Для предотвращения гонок и неконсистентного обновления данных в многопоточной среде применены простые примитивы синхронизации:
-
-- `lock` (в коде — приватные объекты для блокировки): используется в `BookingService` и внутри `Event.TryReserveSeats` для атомарного уменьшения `AvailableSeats`. Это гарантирует, что две параллельные попытки зарезервировать последние места не приведут к отрицательному количеству доступных мест.
-- `SemaphoreSlim` (в `BookingConfirmationService`): ограничивает параллельную обработку подтверждений (инициализирован как `new SemaphoreSlim(1,1)`), чтобы эмулировать последовательную обработку внешнего сервиса и снизить конкуренцию при обновлении статусов и связанных сущностей.
-
-Эти меры позволяют снизить вероятность овербукинга и обеспечить предсказуемое поведение при одновременных запросах.
-
-**Сценарий: овербукинг / конфликт при одновременных бронированиях**
-
-Предположим, на мероприятии осталось 1 место (`AvailableSeats == 1`). Два клиента (A и B) одновременно выполняют `POST /events/{id}/book`:
-
-1. Клиент A и Клиент B отправляют запросы практически одновременно.
-2. В `BookingService.CreateBookingAsync` имеется блокировка (`lock`) вокруг логики резервирования: первая потокобезопасная попытка займёт критическую секцию и вызовет `TryReserveSeats` у события.
-3. Если Клиент A прошёл первым, `TryReserveSeats` уменьшит `AvailableSeats` до `0`, и бронирование для A будет создано — ответ `202 Accepted`.
-4. Когда второй запрос (Клиент B) попадёт в критическую секцию, `TryReserveSeats` вернёт `false`, и сервис выбросит `NoAvailableSeatsException`, в результате API ответит `409 Conflict` для Клиента B.
-
-Таким образом, при конкурирующих попытках система возвращает `409 Conflict` для тех запросов, которые не смогли зарезервировать места.
-
-Если на практике наблюдаются ситуации овербукинга, это означает, что код, выполняющий резервирование, выполняется без ожидаемых блокировок или сторонние сущности изменяют `AvailableSeats` напрямую — в таком случае следует проверить точки доступа к модели `Event` и репозиториям.
-
-**Тесты**
-
-В решении есть два тестовых проекта:
-
-- `EventManager.Tests` — модульные тесты сервисов, моделей, валидации и репозиториев на InMemory-провайдере EF Core. Для них реальный PostgreSQL и Docker не требуются.
-- `EventManager.IntegrationTests` — интеграционные тесты репозиториев с настоящим PostgreSQL. Они используют `Testcontainers.PostgreSql`, поэтому для запуска нужен установленный и запущенный Docker.
-
-В тестах используются: `Xunit`, `FluentAssertions`, `Moq`, `Microsoft.EntityFrameworkCore.InMemory` и `Testcontainers.PostgreSql`.
-
-Запуск только модульных тестов:
+Проект состоит из четырёх независимых слоёв, каждый с чётко определённой ответственностью:
 
 ```
+┌─────────────────────────────────────────┐
+│  EventManager.Presentation              │
+│  (контроллеры, HTTP слой)               │
+├─────────────────────────────────────────┤
+│  EventManager.Application               │
+│  (бизнес-логика, сервисы,DTO)          │
+├─────────────────────────────────────────┤
+│  EventManager.Infrastructure            │
+│  (репозитории, контекст БД, миграции)   │
+├─────────────────────────────────────────┤
+│  EventManager.Domain                    │
+│  (сущности, исключения, общие типы)     │
+└─────────────────────────────────────────┘
+```
+
+**Правила взаимодействия:**
+
+- Presentation → Application → Infrastructure → Domain
+- Domain не зависит ни от чего
+- Infrastructure зависит только от Domain и Application
+- Application использует интерфейсы для работы с данными
+
+### 1. EventManager.Domain
+
+**Назначение:** Определяет основные сущности и бизнес-правила, независимые от фреймворка и БД.
+
+**Содержимое:**
+
+- **Models/** — основные сущности
+  - `Event.cs` — мероприятие с методом `TryReserveSeats()`
+  - `Booking.cs` — бронирование
+  - `PaginatedResult.cs` — результат пагинированного запроса
+- **Exceptions/** — пользовательские исключения
+  - `EventException` — ошибки мероприятий
+  - `BookingException` — ошибки бронирований
+  - `NoAvailableSeatsException` — отсутствие свободных мест
+- **Common/** — константы и enum'ы
+  - `BookingStatus` — статусы бронирования (Pending, Confirmed, Rejected)
+  - `AppConstants` — константы приложения
+
+**Зависимости:** нет (чистый POCO код)
+
+### 2. EventManager.Application
+
+**Назначение:** Содержит бизнес-логику, использует интерфейсы для абстракции от реализации.
+
+**Содержимое:**
+
+- **DTOs/** — объекты передачи данных между слоями
+  - `CreateEventDTO` — для создания мероприятия
+  - `EventInfoDTO` — для возврата информации о мероприятии
+  - `BookingDTO` — для возврата информации о бронировании
+
+- **Interfaces/** — контракты для репозиториев
+  - `IEventRepository` — интерфейс доступа к мероприятиям
+  - `IBookingRepository` — интерфейс доступа к бронированиям
+
+- **Services/** — бизнес-логика
+  - `EventService` — операции с мероприятиями (создание, обновление, фильтрация)
+  - `BookingService` — логика бронирования, проверка свободных мест
+  - `ValidationService` — валидация данных
+
+**Зависимости:** EventManager.Domain
+
+### 3. EventManager.Infrastructure
+
+**Назначение:** Реализует доступ к данным, конфигурацию БД и миграции EF Core.
+
+**Содержимое:**
+
+- **DataAccess/** — конфигурация БД
+  - `AppDbContext` — контекст Entity Framework
+  - `Configuration/` — конфигурация маппирования сущностей
+- **Repositories/** — реализация интерфейсов репозиториев
+  - `EventRepository` — доступ к Event в БД
+  - `BookingRepository` — доступ к Booking в БД
+
+- **Migrations/** — миграции EF Core (автосгенерированные)
+  - `[Timestamp]_InitialCreate.cs` — исходная схема БД
+  - `AppDbContextModelSnapshot.cs` — снимок текущей модели
+
+- **DependencyInjection.cs** — регистрация сервисов в DI контейнер
+
+**Зависимости:** EventManager.Domain, EventManager.Application
+
+### 4. EventManager.Presentation
+
+**Назначение:** HTTP слой, контроллеры, middleware, точка входа приложения.
+
+**Содержимое:**
+
+- **Controllers/** — обработчики HTTP запросов
+  - `EventsController` — endpoints для мероприятий
+  - `BookingsController` — endpoints для бронирований
+
+- **Middleware/** — обработка пипелайна ASP.NET Core
+  - `ErrorHandlingMiddleware` — глобальная обработка исключений
+
+- **BackgroundServices/** — фоновые сервисы
+  - `BookingConfirmationService` — периодическое подтверждение бронирований
+
+- **Program.cs** — конфигурация приложения и DI контейнера
+
+- **appsettings.json** / **appsettings.Development.json** — конфигурация (строка подключения, логирование)
+
+**Зависимости:** EventManager.Domain, EventManager.Application, EventManager.Infrastructure
+
+## Бизнес-логика
+
+### Сценарий использования
+
+1. `POST /events` — создать мероприятие
+2. `POST /events/{id}/book` — создать бронирование (статус: `Pending`)
+3. `GET /bookings/{bookingId}` — проверить статус
+4. Фоновый сервис подтверждает бронирования каждые 15 секунд (статус: `Confirmed` или `Rejected`)
+
+### Синхронизация и защита от гонок
+
+Для предотвращения условий гонки при одновременных бронированиях используются:
+
+- **`lock`** — в `BookingService` для атомарного уменьшения `AvailableSeats`
+- **`SemaphoreSlim`** — в `BookingConfirmationService` для последовательной обработки подтверждений
+
+Это гарантирует консистентность данных при параллельных запросах.
+
+### Обработка конфликтов
+
+Если на мероприятии нет свободных мест, API возвращает `409 Conflict`.
+
+Пример при одновременных бронированиях:
+
+1. На событии осталось 1 место
+2. Клиент A и B одновременно бронируют
+3. Первый получает `202 Accepted`, второй — `409 Conflict`
+
+## Тестирование
+
+Проект содержит два набора тестов:
+
+### Модульные тесты (EventManager.Tests)
+
+Тестирование сервисов и репозиториев на In-Memory БД (Docker не требуется).
+
+```bash
 dotnet test EventManager.Tests/EventManager.Tests.csproj
 ```
 
-Запуск интеграционных тестов:
+Инструменты: `xunit`, `FluentAssertions`, `Moq`, `Microsoft.EntityFrameworkCore.InMemory`
 
-```
+### Интеграционные тесты (EventManager.IntegrationTests)
+
+Тестирование репозиториев с реальным PostgreSQL (требуется Docker).
+
+```bash
 dotnet test EventManager.IntegrationTests/EventManager.IntegrationTests.csproj
 ```
 
-Перед запуском интеграционных тестов убедитесь, что Docker Desktop или Docker Engine запущен. Тесты сами поднимают временный контейнер PostgreSQL и удаляют его после выполнения.
+Инструменты: `Testcontainers.PostgreSql` (поднимает временный контейнер)
 
-Запуск всех тестов решения:
+### Запуск всех тестов
 
-```
+```bash
 dotnet test EventManager.sln
 ```
 
-При запуске всех тестов Docker также должен быть доступен, потому что в набор входят интеграционные тесты.
+## Миграции базы данных
 
-**Структура репозитория**
+Миграции находятся в [EventManager.Infrastructure/Migrations/](EventManager.Infrastructure/Migrations/).
 
-```
-EventManager/
-├── Controllers/              # Контроллеры API (EventsController, BookingsController)
-├── Services/
-│   ├── EventService/         # Бизнес-логика мероприятий
-│   ├── BookingService/       # Бизнес-логика бронирований
-│   └── ValidationService/    # Валидация данных
-├── Data/
-│   ├── EventRepository/      # Хранилище мероприятий
-│   └── BookingRepository/    # Хранилище бронирований
-├── Models/                   # Модели и DTO (Event, Booking, PaginatedResult)
-├── Common/                   # Общие типы (BookingStatus)
-├── Exceptions/               # Пользовательские исключения (EventException, BookingException)
-├── Middleware/               # Глобальная обработка ошибок
-├── Migrations/               # Миграции EF Core
-└── BackgroundServices/       # Фоновые сервисы (BookingConfirmationService)
+При старте приложения они применяются автоматически.
 
-EventManager.Tests/
-└── Services/                 # Модульные тесты для всех компонентов
+### Создание новой миграции
 
-EventManager.IntegrationTests/
-└── Repositories/             # Интеграционные тесты репозиториев с PostgreSQL
+```bash
+dotnet tool install --global dotnet-ef  # если еще не установлен
+
+dotnet ef migrations add <MigrationName> \
+  --project EventManager.Infrastructure \
+  --startup-project EventManager.Presentation
 ```
 
-**Запуск в IDE**
+### Применение миграций
 
-- Откройте решение `EventManager.sln` или проект `EventManager/EventManager.csproj` в Visual Studio или Rider.
-- Установите `EventManager` как стартовый проект и запустите (F5).
+```bash
+dotnet ef database update \
+  --project EventManager.Infrastructure \
+  --startup-project EventManager.Presentation
+```
 
+## Запуск в IDE
+
+- **Visual Studio** или **Rider**: откройте `EventManager.sln`
+- Установите `EventManager.Presentation` как стартовый проект
+- Нажмите F5

@@ -1,10 +1,15 @@
+
+
 using System.Net;
-using EventManager.Data.DataAccess;
-using EventManager.Data.EventRepository;
-using EventManager.Exceptions;
+using EventManager.Application.DTOs;
+using EventManager.Application.Interfaces;
+using EventManager.Application.Services.EventService;
+using EventManager.Application.Services.ValidationService;
+using EventManager.Domain.Exceptions;
+using EventManager.Domain.Models;
+using EventManager.Infrastructure.DataAccess;
+using EventManager.Infrastructure.Repositories.EventRepository;
 using EventManager.Models;
-using EventManager.Services.EventService;
-using EventManager.Services.ValidationService;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,8 +26,8 @@ public class EventServiceTests : IDisposable
     private readonly AppDbContext _dbContext;
     private readonly List<Event> _events;
 
-    const int DefaultPage = 1;
-    const int DefaultPageSize = 10;
+    private const int DefaultPage = 1;
+    private const int DefaultPageSize = 10;
 
     public EventServiceTests()
     {

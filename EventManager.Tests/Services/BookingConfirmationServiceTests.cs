@@ -1,8 +1,8 @@
-using EventManager.BackgroundServices;
-using EventManager.Common;
-using EventManager.Data.BookingRepository;
-using EventManager.Models;
-using EventManager.Services.EventService;
+using EventManager.Application.Interfaces;
+using EventManager.Application.Services.EventService;
+using EventManager.Domain.Common;
+using EventManager.Domain.Models;
+using EventManager.Presentation.BackgroundServices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;

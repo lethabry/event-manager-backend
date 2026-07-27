@@ -1,12 +1,11 @@
-using System.Runtime.InteropServices.JavaScript;
-using EventManager.Data.EventRepository;
-using EventManager.Models;
-namespace EventManager.IntegrationTests.Repositories;
-
-using EventManager.Data.DataAccess;
+using EventManager.Application.DTOs;
+using EventManager.Domain.Models;
+using EventManager.Infrastructure.DataAccess;
+using EventManager.Infrastructure.Repositories.EventRepository;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Testcontainers.PostgreSql;
+
+namespace EventManager.IntegrationTests.Repositories;
 
 public class EventRepositoryTests : IAsyncLifetime
 {

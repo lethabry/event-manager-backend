@@ -1,11 +1,11 @@
-﻿using EventManager.Common;
-using EventManager.Data.BookingRepository;
-using EventManager.Data.DataAccess;
-using EventManager.Exceptions;
-using EventManager.Models;
+﻿using EventManager.Domain.Common;
+using EventManager.Domain.Exceptions;
+using EventManager.Domain.Models;
+using EventManager.Infrastructure.DataAccess;
+using EventManager.Infrastructure.Repositories.BookingRepository;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Testcontainers.PostgreSql;
+
 namespace EventManager.IntegrationTests.Repositories;
 
 public class BookingRepositoryTests : IAsyncLifetime

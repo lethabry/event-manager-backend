@@ -1,7 +1,7 @@
 using System.Net;
-using EventManager.Exceptions;
-using EventManager.Models;
-using EventManager.Services.ValidationService;
+using EventManager.Application.DTOs;
+using EventManager.Application.Services.ValidationService;
+using EventManager.Domain.Exceptions;
 using FluentAssertions;
 
 namespace EventManager.Tests.Services;

@@ -1,9 +1,10 @@
 using System.Net;
-using EventManager.Common;
-using EventManager.Data.BookingRepository;
-using EventManager.Data.DataAccess;
-using EventManager.Exceptions;
-using EventManager.Models;
+using EventManager.Application.Interfaces;
+using EventManager.Domain.Common;
+using EventManager.Domain.Exceptions;
+using EventManager.Domain.Models;
+using EventManager.Infrastructure.DataAccess;
+using EventManager.Infrastructure.Repositories.BookingRepository;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
