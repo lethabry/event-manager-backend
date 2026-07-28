@@ -1,29 +1,25 @@
-#nullable disable
-using System.Net;
-using EventManager.Domain.Models;
-
 namespace EventManager.Domain.Exceptions;
 
 public class EventException : Exception
 {
-    public HttpStatusCode statusCode { get; }
-    public Event evnt { get; }
+    public int statusCode { get; }
+    public Guid? EventId { get; }
 
     public EventException()
     {
     }
 
-    public EventException(HttpStatusCode code, string message, Event? e = null)
+    public EventException(int code, string message, Guid? eventId = null)
         : base(message)
     {
-        evnt = e;
         statusCode = code;
+        EventId = eventId;
     }
 
-    public EventException(HttpStatusCode code, string message, Event e, Exception inner)
+    public EventException(int code, string message, Guid eventId, Exception inner)
         : base(message, inner)
     {
-        evnt = e;
         statusCode = code;
+        EventId = eventId;
     }
 }

@@ -26,15 +26,15 @@ public class ErrorHandlingMiddleware
         }
         catch (EventException ex)
         {
-            await HandleExceptionAsync(context, ex, (int)ex.statusCode);
+            await HandleExceptionAsync(context, ex, ex.statusCode);
         }
         catch (BookingException ex)
         {
-            await HandleExceptionAsync(context, ex, (int)ex.statusCode);
+            await HandleExceptionAsync(context, ex, ex.statusCode);
         }
         catch (NoAvailableSeatsException ex)
         {
-            await HandleExceptionAsync(context, ex, (int)ex.statusCode);
+            await HandleExceptionAsync(context, ex, ex.statusCode);
         }
         catch (Exception ex)
         {

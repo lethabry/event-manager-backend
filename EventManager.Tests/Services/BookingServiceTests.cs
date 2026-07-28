@@ -32,6 +32,7 @@ public class BookingServiceTests : IDisposable
 
         var dbName = Guid.NewGuid().ToString();
         var services = new ServiceCollection();
+        services.AddLogging();
         services.AddDbContext<AppDbContext>(options =>
             options.UseInMemoryDatabase(dbName));
         services.AddScoped<IBookingService, BookingService>();
@@ -127,7 +128,7 @@ public class BookingServiceTests : IDisposable
         var result = () => _bookingService.CreateBookingAsync(_event.Id);
 
         //Assert
-        result.Should().ThrowAsync<NoAvailableSeatsException>().WithMessage("No available seats for this event").Where(e => e.statusCode == HttpStatusCode.Conflict);
+        result.Should().ThrowAsync<NoAvailableSeatsException>().WithMessage("No available seats for this event").Where(e => e.statusCode == 409);
         _mockEventService.Verify((e) => e.GetEventByIdAsync(_event.Id), Times.Once);
     }
 
@@ -160,7 +161,7 @@ public class BookingServiceTests : IDisposable
         // Arrange
         var id = Guid.NewGuid();
         _mockEventService.Setup((e) => e.GetEventByIdAsync(id))
-            .Throws(new EventException(HttpStatusCode.NotFound, $"Мероприятие с id {id} не найдено"));
+            .Throws(new EventException(404, $"Мероприятие с id {id} не найдено"));
 
         //Act
         var result = () => _bookingService.CreateBookingAsync(id);
@@ -169,7 +170,7 @@ public class BookingServiceTests : IDisposable
         result.Should()
             .ThrowAsync<EventException>()
             .WithMessage($"Мероприятие с id {id} не найдено")
-            .Where(e => e.statusCode == HttpStatusCode.NotFound);
+            .Where(e => e.statusCode == 404);
         _mockEventService.Verify((e) => e.GetEventByIdAsync(id), Times.Once);
     }
 
@@ -181,7 +182,7 @@ public class BookingServiceTests : IDisposable
         // Arrange
         var delEvtId = Guid.NewGuid();
         _mockEventService.Setup((e) => e.GetEventByIdAsync(delEvtId))
-            .Throws(new EventException(HttpStatusCode.NotFound,
+            .Throws(new EventException(404,
                 $"Мероприятие с id {delEvtId} не найдено"));
 
         //Act
@@ -191,7 +192,7 @@ public class BookingServiceTests : IDisposable
         result.Should()
             .ThrowAsync<EventException>()
             .WithMessage($"Мероприятие с id {delEvtId} не найдено")
-            .Where(e => e.statusCode == HttpStatusCode.NotFound);
+            .Where(e => e.statusCode == 404);
         _mockEventService.Verify((e) => e.GetEventByIdAsync(delEvtId), Times.Once);
     }
 
@@ -285,7 +286,7 @@ public class BookingServiceTests : IDisposable
         result.Should()
             .ThrowAsync<BookingException>()
             .WithMessage($"Бронирование с id {bookingId} не найдено")
-            .Where((b) => b.statusCode == HttpStatusCode.NotFound);
+            .Where((b) => b.statusCode == 404);
     }
 
     [Fact]

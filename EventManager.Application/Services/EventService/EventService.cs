@@ -1,10 +1,8 @@
-using System.Net;
 using EventManager.Application.DTOs;
 using EventManager.Application.Interfaces;
 using EventManager.Application.Services.ValidationService;
 using EventManager.Domain.Exceptions;
 using EventManager.Domain.Models;
-using EventManager.Models;
 
 namespace EventManager.Application.Services.EventService;
 
@@ -39,7 +37,7 @@ public class EventService : IEventService
         var existing = await _repository.GetEventByIdAsync(id);
         if (existing == null)
         {
-            throw new EventException(HttpStatusCode.NotFound, $"Мероприятие с id {id} не найдено");
+            throw new EventException(404, $"Мероприятие с id {id} не найдено");
         }
 
         return existing;
@@ -58,7 +56,7 @@ public class EventService : IEventService
 
         if (existing == null)
         {
-            throw new EventException(HttpStatusCode.NotFound, $"Мероприятие с id {id} не найдено");
+            throw new EventException(404, $"Мероприятие с id {id} не найдено");
         }
 
         return existing;
@@ -69,12 +67,12 @@ public class EventService : IEventService
         var existing = await _repository.GetEventByIdAsync(id);
         if (existing == null)
         {
-            throw new EventException(HttpStatusCode.NotFound, $"Мероприятие с id {id} не найдено");
+            throw new EventException(404, $"Мероприятие с id {id} не найдено");
         }
         var isDeleted = await _repository.DeleteEventAsync(id);
         if (!isDeleted)
         {
-            throw new EventException(HttpStatusCode.InternalServerError, "Не удалось удалить мероприятие");
+            throw new EventException(500, "Не удалось удалить мероприятие");
         }
     }
 }

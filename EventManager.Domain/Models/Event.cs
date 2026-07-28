@@ -1,5 +1,5 @@
 #nullable disable
-using System.ComponentModel.DataAnnotations;
+using EventManager.Domain.Exceptions;
 
 namespace EventManager.Domain.Models;
 
@@ -24,15 +24,15 @@ public class Event
     {
         if (string.IsNullOrWhiteSpace(title))
         {
-            throw new ValidationException("Название должно быть обязательным");
+            throw new EventValidationException("Название должно быть обязательным");
         }
         if (startAt >= endAt)
         {
-            throw new ValidationException("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия");
+            throw new EventValidationException("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия");
         }
         if (totalSeats <= 0)
         {
-            throw new ValidationException("Количество мест должно быть больше 0");
+            throw new EventValidationException("Количество мест должно быть больше 0");
         }
         return new Event()
         {
@@ -49,23 +49,23 @@ public class Event
     {
         if (string.IsNullOrWhiteSpace(title))
         {
-            throw new ValidationException("Название должно быть обязательным");
+            throw new EventValidationException("Название должно быть обязательным");
         }
         if (startAt >= endAt)
         {
-            throw new ValidationException("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия");
+            throw new EventValidationException("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия");
         }
         if (totalSeats <= 0)
         {
-            throw new ValidationException("Количество мест должно быть больше 0");
+            throw new EventValidationException("Количество мест должно быть больше 0");
         }
         if (availableSeats < 0)
         {
-            throw new ValidationException("Количество свободных мест должно быть не меньше 0");
+            throw new EventValidationException("Количество свободных мест должно быть не меньше 0");
         }
         if (availableSeats > totalSeats)
         {
-            throw new ValidationException("Количество доступных мест не может быть больше мест всего");
+            throw new EventValidationException("Количество доступных мест не может быть больше мест всего");
         }
         return new Event()
         {

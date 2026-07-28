@@ -24,7 +24,7 @@ builder.Services.AddLogging(builder =>
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
-builder.Services.AddHostedService<BookingConfirmationService>();
+builder.Services.AddHostedService<BookingConfirmationBackgroundService>();
 
 if (builder.Environment.IsDevelopment())
 {

@@ -212,6 +212,6 @@ public class BookingRepositoryTests : IDisposable
         await result.Should()
             .ThrowAsync<BookingException>()
             .WithMessage($"Бронирование с id {nonExistingBooking.Id} не найдено")
-            .Where((b) => b.statusCode == HttpStatusCode.NotFound);
+            .Where((b) => b.statusCode == 404);
     }
 }

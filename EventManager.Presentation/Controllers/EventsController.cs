@@ -2,7 +2,6 @@ using EventManager.Application.DTOs;
 using EventManager.Application.Services.BookingService;
 using EventManager.Application.Services.EventService;
 using EventManager.Domain.Models;
-using EventManager.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventManager.Presentation.Controllers;
@@ -29,61 +28,61 @@ public class EventsController : ControllerBase
     /// <param name="to">Фильтрация до конкретной даты мероприятия</param>>
     /// <param name="page">Номер страницы</param>>
     /// <param name="pageSize">Количество элементов в странице</param>>
-    [ProducesResponseType(typeof(PaginatedResultDTO<Event>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PaginatedResponseDTO<EventResponseDTO>), StatusCodes.Status200OK)]
     [Produces("application/json")]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? title, DateTime? from, DateTime? to, int page = 1,
         int pageSize = 10)
     {
         var events = await _eventService.GetEventsAsync(title, from, to, page, pageSize);
-        return Ok(events);
+        return Ok(MapToPaginatedResponse(events));
     }
 
     /// <summary>
     /// Метод для получения мероприятия по id
     /// </summary>
     /// <param name="id">Id мероприятия</param> 
-    [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var existing = await _eventService.GetEventByIdAsync(id);
-        return Ok(existing);
+        return Ok(MapToResponse(existing));
     }
 
     /// <summary>
     /// Метод для создания мероприятия
     /// </summary>
-    [ProducesResponseType(typeof(Event), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status201Created)]
     [Produces("application/json")]
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] CreateEventDTO newEvent)
     {
         var createdEvent = await _eventService.CreateEventAsync(newEvent);
-        return CreatedAtAction(nameof(GetById), new { id = createdEvent?.Id }, createdEvent);
+        return CreatedAtAction(nameof(GetById), new { id = createdEvent?.Id }, MapToResponse(createdEvent));
     }
 
     /// <summary>
     /// Метод для изменения мероприятия
     /// </summary>
     /// <param name="id">Id мероприятия</param>
-    [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(Guid id, [FromBody] EventInfoDTO changedEvent)
     {
         var updatedEvent = await _eventService.UpdateEventAsync(id, changedEvent);
-        return Ok(updatedEvent);
+        return Ok(MapToResponse(updatedEvent));
     }
 
     /// <summary>
     /// Метод для удаления мероприятия
     /// </summary>
     /// <param name="id">Id мероприятия</param>
-    [ProducesResponseType(typeof(Event), StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -108,5 +107,35 @@ public class EventsController : ControllerBase
             routeValues: new { id = booking?.Id },
             value: booking
         );
+    }
+
+    private static PaginatedResponseDTO<EventResponseDTO> MapToPaginatedResponse(PaginatedResultDTO<Event> events)
+    {
+        return new PaginatedResponseDTO<EventResponseDTO>
+        {
+            TotalAmount = events.TotalAmount,
+            Result = events.Result.Select(evt => MapToResponse(evt)!).ToList(),
+            CurrentPage = events.CurrentPage,
+            CurrentPageSize = events.CurrentPageSize
+        };
+    }
+
+    private static EventResponseDTO? MapToResponse(Event? evt)
+    {
+        if (evt == null)
+        {
+            return null;
+        }
+
+        return new EventResponseDTO
+        {
+            Id = evt.Id,
+            Title = evt.Title,
+            Description = evt.Description,
+            StartAt = evt.StartAt,
+            EndAt = evt.EndAt,
+            TotalSeats = evt.TotalSeats,
+            AvailableSeats = evt.AvailableSeats
+        };
     }
 }

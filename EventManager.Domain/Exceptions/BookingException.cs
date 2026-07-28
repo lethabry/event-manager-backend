@@ -1,28 +1,25 @@
-using System.Net;
-using EventManager.Domain.Models;
-
 namespace EventManager.Domain.Exceptions;
 
 public class BookingException : Exception
 {
-    public HttpStatusCode statusCode { get; }
-    public Booking? booking { get; }
+    public int statusCode { get; }
+    public Guid? BookingId { get; }
 
     public BookingException()
     {
     }
 
-    public BookingException(HttpStatusCode code, string message, Booking? b = null)
+    public BookingException(int code, string message, Guid? bookingId = null)
         : base(message)
     {
-        booking = b;
         statusCode = code;
+        BookingId = bookingId;
     }
 
-    public BookingException(HttpStatusCode code, string message, Booking b, Exception inner)
+    public BookingException(int code, string message, Guid bookingId, Exception inner)
         : base(message, inner)
     {
-        booking = b;
         statusCode = code;
+        BookingId = bookingId;
     }
 }

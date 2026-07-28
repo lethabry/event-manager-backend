@@ -1,6 +1,5 @@
 using EventManager.Application.DTOs;
 using EventManager.Domain.Models;
-using EventManager.Models;
 
 namespace EventManager.Application.Services.EventService;
 

@@ -1,5 +1,4 @@
 #nullable disable
-using System.Text.Json.Serialization;
 using EventManager.Domain.Common;
 
 namespace EventManager.Domain.Models;
@@ -8,11 +7,9 @@ public class Booking
 {
     public Guid Id { get; init; }
     public Guid EventId { get; init; }
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public BookingStatus Status { get; private set; }
     public DateTime CreatedAt { get; init; }
     public DateTime? ProcessedAt { get; private set; }
-    [JsonIgnore]
     public Event Event { get; set; }
 
     public Booking(Guid eventId)

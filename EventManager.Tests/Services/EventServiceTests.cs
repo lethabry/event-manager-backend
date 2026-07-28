@@ -9,7 +9,6 @@ using EventManager.Domain.Exceptions;
 using EventManager.Domain.Models;
 using EventManager.Infrastructure.DataAccess;
 using EventManager.Infrastructure.Repositories.EventRepository;
-using EventManager.Models;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -284,7 +283,7 @@ public class EventServiceTests : IDisposable
 
         _mockValidationService.Setup((validation) => validation.ValidatePaginatedResult(fromDate, toDate, 1, 10))
             .Throws(() =>
-                new EventException(HttpStatusCode.BadRequest,
+                new EventException(400,
                     "Дата начала мероприятия должны быть раньше даты окончания мероприятия"));
 
         //Act
@@ -294,7 +293,7 @@ public class EventServiceTests : IDisposable
         await act.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Дата начала мероприятия должны быть раньше даты окончания мероприятия")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidatePaginatedResult(fromDate, toDate, 1, 10), Times.Once);
     }
 
@@ -307,7 +306,7 @@ public class EventServiceTests : IDisposable
         //Arrange
         _mockValidationService.Setup((validation) => validation.ValidatePaginatedResult(null, null, page, 10))
             .Throws(() =>
-                new EventException(HttpStatusCode.BadRequest, "Номер страницы не может быть меньше 1"));
+                new EventException(400, "Номер страницы не может быть меньше 1"));
 
         //Act
         var result = () => _eventService.GetEventsAsync(null, null, null, page, 10);
@@ -316,7 +315,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Номер страницы не может быть меньше 1")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
     }
 
     [Theory]
@@ -328,7 +327,7 @@ public class EventServiceTests : IDisposable
         //Arrange
         _mockValidationService.Setup((validation) => validation.ValidatePaginatedResult(null, null, 1, pageSize))
             .Throws(() =>
-                new EventException(HttpStatusCode.BadRequest, "Количество элементов не может быть меньше 1"));
+                new EventException(400, "Количество элементов не может быть меньше 1"));
 
         //Act
         var result = async () => await _eventService.GetEventsAsync(null, null, null, 1, pageSize);
@@ -337,7 +336,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Количество элементов не может быть меньше 1")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
     }
 
     [Fact]
@@ -368,7 +367,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage($"Мероприятие с id {randomId} не найдено")
-            .Where(e => e.statusCode == HttpStatusCode.NotFound);
+            .Where(e => e.statusCode == 404);
     }
 
     [Fact]
@@ -434,7 +433,7 @@ public class EventServiceTests : IDisposable
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
             .Throws(() =>
-                new EventException(HttpStatusCode.BadRequest,
+                new EventException(400,
                     "Название мероприятия не может быть пустым"));
 
         //Act
@@ -444,7 +443,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Название мероприятия не может быть пустым")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -462,7 +461,7 @@ public class EventServiceTests : IDisposable
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
             .Throws(
-                new EventException(HttpStatusCode.BadRequest,
+                new EventException(400,
                     "Дата начала мероприятия должна быть заполнена"));
 
         //Act
@@ -472,7 +471,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Дата начала мероприятия должна быть заполнена")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -490,7 +489,7 @@ public class EventServiceTests : IDisposable
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
             .Throws(
-                new EventException(HttpStatusCode.BadRequest,
+                new EventException(400,
                     "Дата конца мероприятия должна быть заполнена"));
 
         //Act
@@ -500,7 +499,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Дата конца мероприятия должна быть заполнена")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -518,7 +517,7 @@ public class EventServiceTests : IDisposable
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
             .Throws(
-                new EventException(HttpStatusCode.BadRequest,
+                new EventException(400,
                     "Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия"));
 
         //Act
@@ -528,7 +527,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -545,7 +544,7 @@ public class EventServiceTests : IDisposable
             TotalSeats = 0
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
-            .Throws(new EventException(HttpStatusCode.BadRequest, "Количество мест должно быть больше 0"));
+            .Throws(new EventException(400, "Количество мест должно быть больше 0"));
 
         //Act
         var result = async () => await _eventService.CreateEventAsync(evnt);
@@ -554,7 +553,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Количество мест должно быть больше 0")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -571,7 +570,7 @@ public class EventServiceTests : IDisposable
             TotalSeats = -5
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
-            .Throws(new EventException(HttpStatusCode.BadRequest, "Количество мест должно быть больше 0"));
+            .Throws(new EventException(400, "Количество мест должно быть больше 0"));
 
         //Act
         var result = async () => await _eventService.CreateEventAsync(evnt);
@@ -580,7 +579,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Количество мест должно быть больше 0")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -657,7 +656,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage($"Мероприятие с id {evntId} не найдено")
-            .Where(e => e.statusCode == HttpStatusCode.NotFound);
+            .Where(e => e.statusCode == 404);
         _mockValidationService.Verify(x => x.ValidateEventDTO(updateEventDTO), Times.Once);
     }
 
@@ -676,7 +675,7 @@ public class EventServiceTests : IDisposable
             AvailableSeats = 5
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
-            .Throws(() => new EventException(HttpStatusCode.BadRequest, "Название мероприятия не может быть пустым"));
+            .Throws(() => new EventException(400, "Название мероприятия не может быть пустым"));
 
         //Act
         var result = async () => await _eventService.UpdateEventAsync(evntId, evnt);
@@ -685,7 +684,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Название мероприятия не может быть пустым")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -705,7 +704,7 @@ public class EventServiceTests : IDisposable
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
             .Throws(
-                new EventException(HttpStatusCode.BadRequest,
+                new EventException(400,
                     "Дата начала мероприятия должна быть заполнена"));
 
         //Act
@@ -715,7 +714,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Дата начала мероприятия должна быть заполнена")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -735,7 +734,7 @@ public class EventServiceTests : IDisposable
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
             .Throws(
-                new EventException(HttpStatusCode.BadRequest,
+                new EventException(400,
                     "Дата конца мероприятия должна быть заполнена"));
 
         //Act
@@ -745,7 +744,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Дата конца мероприятия должна быть заполнена")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -765,7 +764,7 @@ public class EventServiceTests : IDisposable
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
             .Throws(
-                new EventException(HttpStatusCode.BadRequest,
+                new EventException(400,
                     "Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия"));
 
         //Act
@@ -775,7 +774,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -794,7 +793,7 @@ public class EventServiceTests : IDisposable
             AvailableSeats = 5
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
-            .Throws(new EventException(HttpStatusCode.BadRequest, "Количество мест должно быть больше 0"));
+            .Throws(new EventException(400, "Количество мест должно быть больше 0"));
 
         //Act
         var result = async () => await _eventService.UpdateEventAsync(evntId, evnt);
@@ -803,7 +802,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Количество мест должно быть больше 0")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -822,7 +821,7 @@ public class EventServiceTests : IDisposable
             AvailableSeats = 5
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
-            .Throws(new EventException(HttpStatusCode.BadRequest, "Количество мест должно быть больше 0"));
+            .Throws(new EventException(400, "Количество мест должно быть больше 0"));
 
         //Act
         var result = async () => await _eventService.UpdateEventAsync(evntId, evnt);
@@ -831,7 +830,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Количество мест должно быть больше 0")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -850,7 +849,7 @@ public class EventServiceTests : IDisposable
             AvailableSeats = 5
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
-            .Throws(new EventException(HttpStatusCode.BadRequest, "Количество мест должно быть больше 0"));
+            .Throws(new EventException(400, "Количество мест должно быть больше 0"));
 
         //Act
         var result = async () => await _eventService.UpdateEventAsync(evntId, evnt);
@@ -859,7 +858,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Количество мест должно быть больше 0")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -878,7 +877,7 @@ public class EventServiceTests : IDisposable
             AvailableSeats = 10
         };
         _mockValidationService.Setup((validation) => validation.ValidateEventDTO(evnt))
-            .Throws(new EventException(HttpStatusCode.BadRequest, "Количество доступных мест не может быть больше мест всего"));
+            .Throws(new EventException(400, "Количество доступных мест не может быть больше мест всего"));
 
         //Act
         var result = async () => await _eventService.UpdateEventAsync(evntId, evnt);
@@ -887,7 +886,7 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage("Количество доступных мест не может быть больше мест всего")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Where(e => e.statusCode == 400);
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
 
@@ -919,6 +918,6 @@ public class EventServiceTests : IDisposable
         await result.Should()
             .ThrowAsync<EventException>()
             .WithMessage($"Мероприятие с id {evntId} не найдено")
-            .Where(e => e.statusCode == HttpStatusCode.NotFound);
+            .Where(e => e.statusCode == 404);
     }
 }

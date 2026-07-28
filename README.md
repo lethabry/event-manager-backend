@@ -38,7 +38,7 @@ Swagger UI доступен на `/swagger`.
 
 ## Конфигурация
 
-Строка подключения к БД находится в [EventManager.Presentation/appsettings.json](EventManager.Presentation/appsettings.json) в разделе `ConnectionStrings:DefaultConnection`. Значения по умолчанию совпадают с `docker-compose.yml`, поэтому менять не требуется.
+Строка подключения к БД читается из `ConnectionStrings:DefaultConnection`. В `appsettings.json` пароль оставлен пустым; для локальной разработки задайте полный connection string через `dotnet user-secrets set "ConnectionStrings:DefaultConnection" "..."` или переменную окружения `ConnectionStrings__DefaultConnection`.
 
 ## API Endpoints
 
@@ -48,10 +48,10 @@ Swagger UI доступен на `/swagger`.
 
 - `GET /events` — получить список мероприятий с фильтрацией и пагинацией
   - Параметры: `title`, `from`, `to`, `page` (по умолчанию 1), `pageSize` (по умолчанию 10)
-  - Ответ: `200 OK` с `PaginatedResultDTO<Event>`
+  - Ответ: `200 OK` с `PaginatedResponseDTO<EventResponseDTO>`
 
 - `GET /events/{id}` — получить мероприятие по ID
-  - Ответ: `200 OK` с `EventDTO` или `404 Not Found`
+  - Ответ: `200 OK` с `EventResponseDTO` или `404 Not Found`
 
 - `POST /events` — создать новое мероприятие
   - Тело: `CreateEventDTO` с полями `Title`, `Description`, `StartAt`, `EndAt`, `TotalSeats`

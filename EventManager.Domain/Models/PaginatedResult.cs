@@ -1,5 +1,5 @@
 #nullable disable
-namespace EventManager.Models;
+namespace EventManager.Domain.Models;
 
 public class PaginatedResultDTO<T>
 {

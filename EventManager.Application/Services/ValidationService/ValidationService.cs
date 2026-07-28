@@ -1,4 +1,3 @@
-using System.Net;
 using EventManager.Application.DTOs;
 using EventManager.Domain.Exceptions;
 namespace EventManager.Application.Services.ValidationService;
@@ -9,30 +8,30 @@ public class ValidationService : IValidationService
     {
         if (string.IsNullOrWhiteSpace(eventDTO.Title))
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Название мероприятия не может быть пустым");
+            throw new EventException(400, "Название мероприятия не может быть пустым");
         }
 
         if (eventDTO.StartAt == DateTime.MinValue)
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Дата начала мероприятия должна быть заполнена");
+            throw new EventException(400, "Дата начала мероприятия должна быть заполнена");
         }
 
         if (eventDTO.EndAt == DateTime.MinValue)
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Дата конца мероприятия должна быть заполнена");
+            throw new EventException(400, "Дата конца мероприятия должна быть заполнена");
         }
 
         if (eventDTO.StartAt >= eventDTO.EndAt)
         {
             throw new EventException(
-                HttpStatusCode.BadRequest,
+                400,
                 "Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия"
             );
         }
 
         if (eventDTO.TotalSeats <= 0)
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Количество мест должно быть больше 0");
+            throw new EventException(400, "Количество мест должно быть больше 0");
         }
     }
 
@@ -40,40 +39,40 @@ public class ValidationService : IValidationService
     {
         if (string.IsNullOrWhiteSpace(eventDTO.Title))
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Название мероприятия не может быть пустым");
+            throw new EventException(400, "Название мероприятия не может быть пустым");
         }
 
         if (eventDTO.StartAt == DateTime.MinValue)
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Дата начала мероприятия должна быть заполнена");
+            throw new EventException(400, "Дата начала мероприятия должна быть заполнена");
         }
 
         if (eventDTO.EndAt == DateTime.MinValue)
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Дата конца мероприятия должна быть заполнена");
+            throw new EventException(400, "Дата конца мероприятия должна быть заполнена");
         }
 
         if (eventDTO.StartAt >= eventDTO.EndAt)
         {
             throw new EventException(
-                HttpStatusCode.BadRequest,
+                400,
                 "Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия"
             );
         }
 
         if (eventDTO.TotalSeats <= 0)
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Количество мест должно быть больше 0");
+            throw new EventException(400, "Количество мест должно быть больше 0");
         }
 
         if (eventDTO.AvailableSeats < 0)
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Количество доступных мест должно быть не меньше 0");
+            throw new EventException(400, "Количество доступных мест должно быть не меньше 0");
         }
 
         if (eventDTO.AvailableSeats > eventDTO.TotalSeats)
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Количество доступных мест не может быть больше мест всего");
+            throw new EventException(400, "Количество доступных мест не может быть больше мест всего");
         }
     }
 
@@ -82,18 +81,18 @@ public class ValidationService : IValidationService
         if (from.HasValue && to.HasValue && from.Value >= to.Value)
         {
             throw new EventException(
-                HttpStatusCode.BadRequest,
+                400,
                 "Дата начала мероприятия должны быть раньше даты окончания мероприятия");
         }
 
         if (page <= 0)
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Номер страницы не может быть меньше 1");
+            throw new EventException(400, "Номер страницы не может быть меньше 1");
         }
 
         if (pageSize <= 0)
         {
-            throw new EventException(HttpStatusCode.BadRequest, "Количество элементов не может быть меньше 1");
+            throw new EventException(400, "Количество элементов не может быть меньше 1");
         }
     }
 }
