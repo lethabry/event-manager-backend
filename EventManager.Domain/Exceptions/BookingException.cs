@@ -2,24 +2,13 @@ namespace EventManager.Domain.Exceptions;
 
 public class BookingException : Exception
 {
-    public int statusCode { get; }
-    public Guid? BookingId { get; }
-
-    public BookingException()
-    {
-    }
-
-    public BookingException(int code, string message, Guid? bookingId = null)
+    public BookingException(string message)
         : base(message)
     {
-        statusCode = code;
-        BookingId = bookingId;
     }
 
-    public BookingException(int code, string message, Guid bookingId, Exception inner)
+    public BookingException(string message, Exception inner)
         : base(message, inner)
     {
-        statusCode = code;
-        BookingId = bookingId;
     }
 }

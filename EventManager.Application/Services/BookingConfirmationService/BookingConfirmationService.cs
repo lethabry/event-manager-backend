@@ -31,27 +31,16 @@ public class BookingConfirmationService : IBookingConfirmationService
 
     public async Task ProcessBookingAsync(Guid bookingId, CancellationToken ct)
     {
-        Event? evt = null;
+        Event? evt;
         var booking = await _bookingRepository.GetBookingByIdAsync(bookingId);
         if (booking == null)
         {
-            throw new BookingException(404, $"Не найдено бронирование с id {bookingId}");
+            throw new BookingNotFoundException(bookingId);
         }
 
         try
         {
             evt = await _eventService.GetEventByIdAsync(booking.EventId);
-
-            if (evt == null)
-            {
-                booking.Reject();
-            }
-            else
-            {
-                booking.Confirm();
-            }
-
-            await _bookingRepository.UpdateBookingAsync(booking, ct);
         }
         catch (OperationCanceledException)
         {
@@ -59,24 +48,49 @@ public class BookingConfirmationService : IBookingConfirmationService
         }
         catch
         {
-            booking.Reject();
-            await _bookingRepository.UpdateBookingAsync(booking, ct);
-
-            if (evt != null)
-            {
-                evt.ReleaseSeats();
-                var updatedEvent = new EventInfoDTO
-                {
-                    Title = evt.Title,
-                    Description = string.IsNullOrEmpty(evt.Description) ? null : evt.Description,
-                    StartAt = evt.StartAt,
-                    EndAt = evt.EndAt,
-                    TotalSeats = evt.TotalSeats,
-                    AvailableSeats = evt.AvailableSeats
-                };
-
-                await _eventService.UpdateEventAsync(evt.Id, updatedEvent);
-            }
+            await RejectBookingAsync(booking, null, ct);
+            return;
         }
+
+        if (evt == null)
+        {
+            await RejectBookingAsync(booking, null, ct);
+            return;
+        }
+
+        if (!booking.Confirm())
+        {
+            return;
+        }
+
+        await _bookingRepository.UpdateBookingAsync(booking, ct);
+    }
+
+    private async Task RejectBookingAsync(Booking booking, Event? evt, CancellationToken ct)
+    {
+        if (!booking.Reject())
+        {
+            return;
+        }
+
+        if (evt == null)
+        {
+            return;
+        }
+
+        await _bookingRepository.UpdateBookingAsync(booking, ct);
+
+        evt.ReleaseSeats();
+        var updatedEvent = new EventInfoDTO
+        {
+            Title = evt.Title,
+            Description = string.IsNullOrEmpty(evt.Description) ? null : evt.Description,
+            StartAt = evt.StartAt,
+            EndAt = evt.EndAt,
+            TotalSeats = evt.TotalSeats,
+            AvailableSeats = evt.AvailableSeats
+        };
+
+        await _eventService.UpdateEventAsync(evt.Id, updatedEvent);
     }
 }

@@ -37,7 +37,7 @@ public class EventService : IEventService
         var existing = await _repository.GetEventByIdAsync(id);
         if (existing == null)
         {
-            throw new EventException(404, $"Мероприятие с id {id} не найдено");
+            throw new EventNotFoundException(id);
         }
 
         return existing;
@@ -56,7 +56,7 @@ public class EventService : IEventService
 
         if (existing == null)
         {
-            throw new EventException(404, $"Мероприятие с id {id} не найдено");
+            throw new EventNotFoundException(id);
         }
 
         return existing;
@@ -67,12 +67,12 @@ public class EventService : IEventService
         var existing = await _repository.GetEventByIdAsync(id);
         if (existing == null)
         {
-            throw new EventException(404, $"Мероприятие с id {id} не найдено");
+            throw new EventNotFoundException(id);
         }
         var isDeleted = await _repository.DeleteEventAsync(id);
         if (!isDeleted)
         {
-            throw new EventException(500, "Не удалось удалить мероприятие");
+            throw new InvalidOperationException("Не удалось удалить мероприятие");
         }
     }
 }

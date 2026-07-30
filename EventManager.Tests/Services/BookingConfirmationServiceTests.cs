@@ -2,6 +2,7 @@ using EventManager.Application.Interfaces;
 using EventManager.Application.Services.BookingConfirmationService;
 using EventManager.Application.Services.EventService;
 using EventManager.Domain.Common;
+using EventManager.Domain.Exceptions;
 using EventManager.Domain.Models;
 using Moq;
 
@@ -79,5 +80,76 @@ public class BookingConfirmationServiceTests
         {
             Assert.Equal(BookingStatus.Confirmed, booking.Status);
         }
+    }
+
+    [Fact]
+    public async Task ProcessBookingAsync_ConfirmationSaveFails_ShouldNotRejectOrReleaseSeat()
+    {
+        //Arrange
+        var evt = Event.Create("Test Event", DateTime.UtcNow, DateTime.UtcNow.AddHours(2), 1);
+        evt.TryReserveSeats();
+        var booking = new Booking(evt.Id);
+
+        _mockEventService.Setup(service => service.GetEventByIdAsync(evt.Id)).ReturnsAsync(evt);
+        _mockRepository.Setup(repository => repository.GetBookingByIdAsync(booking.Id)).ReturnsAsync(booking);
+        _mockRepository
+            .Setup(repository => repository.UpdateBookingAsync(booking, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Save failed"));
+
+        //Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _service.ProcessBookingAsync(booking.Id, CancellationToken.None));
+
+        Assert.Equal(BookingStatus.Confirmed, booking.Status);
+        Assert.Equal(0, evt.AvailableSeats);
+        _mockRepository.Verify(
+            repository => repository.UpdateBookingAsync(booking, It.IsAny<CancellationToken>()),
+            Times.Once);
+        _mockEventService.Verify(
+            service => service.UpdateEventAsync(It.IsAny<Guid>(), It.IsAny<EventManager.Application.DTOs.EventInfoDTO>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessBookingAsync_ExternalCheckFails_ShouldRejectPendingBooking()
+    {
+        //Arrange
+        var eventId = Guid.NewGuid();
+        var booking = new Booking(eventId);
+
+        _mockRepository.Setup(repository => repository.GetBookingByIdAsync(booking.Id)).ReturnsAsync(booking);
+        _mockEventService
+            .Setup(service => service.GetEventByIdAsync(eventId))
+            .ThrowsAsync(new EventNotFoundException(eventId));
+
+        //Act
+        await _service.ProcessBookingAsync(booking.Id, CancellationToken.None);
+
+        //Assert
+        Assert.Equal(BookingStatus.Rejected, booking.Status);
+        _mockRepository.Verify(repository => repository.GetBookingByIdAsync(booking.Id), Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessBookingAsync_ExternalCheckFailsForProcessedBooking_ShouldNotPersistAgain()
+    {
+        //Arrange
+        var eventId = Guid.NewGuid();
+        var booking = new Booking(eventId);
+        booking.Confirm();
+
+        _mockRepository.Setup(repository => repository.GetBookingByIdAsync(booking.Id)).ReturnsAsync(booking);
+        _mockEventService
+            .Setup(service => service.GetEventByIdAsync(eventId))
+            .ThrowsAsync(new EventNotFoundException(eventId));
+
+        //Act
+        await _service.ProcessBookingAsync(booking.Id, CancellationToken.None);
+
+        //Assert
+        Assert.Equal(BookingStatus.Confirmed, booking.Status);
+        _mockRepository.Verify(
+            repository => repository.UpdateBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

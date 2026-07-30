@@ -1,3 +1,4 @@
+using System.Text.Json;
 using EventManager.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -5,6 +6,7 @@ namespace EventManager.Presentation.Middleware;
 
 public class ErrorHandlingMiddleware
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly RequestDelegate _next;
     private readonly ILogger<ErrorHandlingMiddleware> _logger;
 
@@ -20,46 +22,57 @@ public class ErrorHandlingMiddleware
         {
             await _next(context);
         }
-        catch (OperationCanceledException ex)
+        catch (Exception exception)
         {
-            await HandleExceptionAsync(context, ex, 499);
-        }
-        catch (EventException ex)
-        {
-            await HandleExceptionAsync(context, ex, ex.statusCode);
-        }
-        catch (BookingException ex)
-        {
-            await HandleExceptionAsync(context, ex, ex.statusCode);
-        }
-        catch (NoAvailableSeatsException ex)
-        {
-            await HandleExceptionAsync(context, ex, ex.statusCode);
-        }
-        catch (Exception ex)
-        {
-            await HandleExceptionAsync(context, ex, 500);
+            await HandleExceptionAsync(context, exception);
         }
     }
 
-    private async Task HandleExceptionAsync(HttpContext context, Exception exception, int statusCode)
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        _logger.LogError(
-            exception,
-            "Unhandled exception. Method: {Method}, Path: {Path}",
-            context.Request.Method,
-            context.Request.Path
-        );
+        var statusCode = GetStatusCode(exception);
+        var isUnexpected = statusCode == StatusCodes.Status500InternalServerError;
+
+        if (isUnexpected)
+        {
+            _logger.LogError(
+                exception,
+                "Unhandled exception. Method: {Method}, Path: {Path}",
+                context.Request.Method,
+                context.Request.Path);
+        }
+        else
+        {
+            _logger.LogWarning(
+                exception,
+                "Request failed. Method: {Method}, Path: {Path}, StatusCode: {StatusCode}",
+                context.Request.Method,
+                context.Request.Path,
+                statusCode);
+        }
 
         var response = new ProblemDetails
         {
-            Title = exception.Message,
+            Title = isUnexpected ? "Internal server error" : exception.Message,
             Status = statusCode
         };
 
         context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/json";
+        context.Response.ContentType = "application/problem+json";
 
-        await context.Response.WriteAsJsonAsync(response);
+        await JsonSerializer.SerializeAsync(context.Response.Body, response, JsonOptions);
+    }
+
+    private static int GetStatusCode(Exception exception)
+    {
+        return exception switch
+        {
+            OperationCanceledException => 499,
+            EventValidationException => StatusCodes.Status400BadRequest,
+            EventNotFoundException => StatusCodes.Status404NotFound,
+            BookingNotFoundException => StatusCodes.Status404NotFound,
+            NoAvailableSeatsException => StatusCodes.Status409Conflict,
+            _ => StatusCodes.Status500InternalServerError
+        };
     }
 }

@@ -30,12 +30,30 @@ public class BookingRepository : IBookingRepository
         return await _appDbContext.Bookings.FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    public async Task<Booking?> CreateBookingAsync(Guid eventId)
+    public async Task<Booking> CreateBookingAsync(Guid eventId)
     {
+        await using var transaction = await _appDbContext.Database.BeginTransactionAsync();
+
+        var exist = await _appDbContext.Events.AnyAsync(e => e.Id == eventId);
+
+        if (!exist)
+        {
+            throw new EventNotFoundException(eventId);
+        }
+
+        var affected = await _appDbContext.Events
+            .Where(e => e.Id == eventId && e.AvailableSeats > 0)
+            .ExecuteUpdateAsync(update => update.SetProperty(e => e.AvailableSeats, e => e.AvailableSeats - 1));
+
+        if (affected == 0)
+        {
+            throw new NoAvailableSeatsException(eventId);
+        }
+
         var booking = new Booking(eventId);
-        _logger.LogDebug("Creating booking {BookingId} for event {EventId}", booking.Id, eventId);
-        _appDbContext.Bookings.Add(booking);
+        await _appDbContext.Bookings.AddAsync(booking);
         await _appDbContext.SaveChangesAsync();
+        await transaction.CommitAsync();
         return booking;
     }
 
@@ -56,7 +74,7 @@ public class BookingRepository : IBookingRepository
         var booking = await GetBookingByIdAsync(updatedBooking.Id);
         if (booking == null)
         {
-            throw new BookingException(404, $"Бронирование с id {updatedBooking.Id} не найдено", updatedBooking.Id);
+            throw new BookingNotFoundException(updatedBooking.Id);
         }
         _logger.LogDebug("Updating booking {BookingId}", updatedBooking.Id);
         _appDbContext.Update(updatedBooking);
