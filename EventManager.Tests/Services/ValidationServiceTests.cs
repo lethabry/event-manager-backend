@@ -88,7 +88,7 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidateEventDTO(validEventDTO);
 
         //Assert
-        result.Should().NotThrow<EventException>();
+        result.Should().NotThrow<EventValidationException>();
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidateEventDTO(validEventDTO);
 
         //Assert
-        result.Should().NotThrow<EventException>();
+        result.Should().NotThrow<EventValidationException>();
     }
 
     [Fact]
@@ -129,7 +129,7 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Название мероприятия не может быть пустым")
             ;
     }
@@ -152,7 +152,7 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Название мероприятия не может быть пустым")
             ;
     }
@@ -175,7 +175,7 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Название мероприятия не может быть пустым")
             ;
     }
@@ -198,7 +198,7 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Дата начала мероприятия должна быть заполнена")
             ;
     }
@@ -221,7 +221,7 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Дата конца мероприятия должна быть заполнена")
             ;
     }
@@ -245,7 +245,7 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
             ;
     }
@@ -268,7 +268,7 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
             ;
     }
@@ -291,7 +291,7 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Количество мест должно быть больше 0")
             ;
     }
@@ -315,9 +315,8 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
-            .WithMessage("Количество мест должно быть больше 0")
-            ;
+            .Throw<EventValidationException>()
+            .WithMessage("Количество мест должно быть больше 0");
     }
 
     [Fact]
@@ -338,7 +337,7 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Количество доступных мест должно быть не меньше 0")
             ;
     }
@@ -361,7 +360,7 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Количество доступных мест не может быть больше мест всего")
             ;
     }
@@ -375,7 +374,7 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
 
         // Assert
-        result.Should().NotThrow<EventException>();
+        result.Should().NotThrow<EventValidationException>();
     }
 
     [Theory]
@@ -387,7 +386,7 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
 
         // Assert
-        result.Should().Throw<EventException>().WithMessage("Дата начала мероприятия должны быть раньше даты окончания мероприятия");
+        result.Should().Throw<EventValidationException>().WithMessage("Дата начала мероприятия должны быть раньше даты окончания мероприятия");
     }
 
     [Theory]
@@ -399,7 +398,7 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
 
         // Assert
-        result.Should().Throw<EventException>().WithMessage("Количество элементов не может быть меньше 1");
+        result.Should().Throw<EventValidationException>().WithMessage("Количество элементов не может быть меньше 1");
     }
 
     [Theory]
@@ -411,6 +410,6 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
 
         // Assert
-        result.Should().Throw<EventException>().WithMessage("Номер страницы не может быть меньше 1");
+        result.Should().Throw<EventValidationException>().WithMessage("Номер страницы не может быть меньше 1");
     }
 }

@@ -73,12 +73,12 @@ public class BookingConfirmationService : IBookingConfirmationService
             return;
         }
 
+        await _bookingRepository.UpdateBookingAsync(booking, ct);
+
         if (evt == null)
         {
             return;
         }
-
-        await _bookingRepository.UpdateBookingAsync(booking, ct);
 
         evt.ReleaseSeats();
         var updatedEvent = new EventInfoDTO

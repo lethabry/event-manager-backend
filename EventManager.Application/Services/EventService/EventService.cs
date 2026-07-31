@@ -20,14 +20,14 @@ public class EventService : IEventService
     public async Task<PaginatedResultDTO<Event>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize)
     {
         _validation.ValidatePaginatedResult(from, to, page, pageSize);
-        var events = await _repository.GetEventsAsync(title, from, to);
-        var paginatedEvents = events.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        var events = await _repository.GetEventsAsync(title, from, to, page, pageSize);
+        var totalAmount = await _repository.GetEventsCountAsync(title, from, to);
         var result = new PaginatedResultDTO<Event>()
         {
             CurrentPage = page,
             CurrentPageSize = pageSize,
-            Result = paginatedEvents,
-            TotalAmount = events.Count
+            Result = events,
+            TotalAmount = totalAmount
         };
         return result;
     }
@@ -52,14 +52,27 @@ public class EventService : IEventService
     public async Task<Event?> UpdateEventAsync(Guid id, EventInfoDTO updatedEvent)
     {
         _validation.ValidateEventDTO(updatedEvent);
-        var existing = await _repository.UpdateEventAsync(id, updatedEvent);
+        var existing = await _repository.GetEventByIdAsync(id);
 
         if (existing == null)
         {
             throw new EventNotFoundException(id);
         }
 
-        return existing;
+        existing.Update(
+            updatedEvent.Title,
+            updatedEvent.StartAt,
+            updatedEvent.EndAt,
+            updatedEvent.TotalSeats,
+            updatedEvent.AvailableSeats,
+            string.IsNullOrEmpty(updatedEvent.Description) ? null : updatedEvent.Description);
+        var savedEvent = await _repository.UpdateEventAsync(existing);
+        if (savedEvent == null)
+        {
+            throw new EventNotFoundException(id);
+        }
+
+        return savedEvent;
     }
 
     public async Task DeleteEventAsync(Guid id)
@@ -72,7 +85,7 @@ public class EventService : IEventService
         var isDeleted = await _repository.DeleteEventAsync(id);
         if (!isDeleted)
         {
-            throw new InvalidOperationException("Не удалось удалить мероприятие");
+            throw new EventDeletionFailedException();
         }
     }
 }

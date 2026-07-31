@@ -29,6 +29,7 @@ public class EventsController : ControllerBase
     /// <param name="page">Номер страницы</param>>
     /// <param name="pageSize">Количество элементов в странице</param>>
     [ProducesResponseType(typeof(PaginatedResponseDTO<EventResponseDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [Produces("application/json")]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? title, DateTime? from, DateTime? to, int page = 1,
@@ -56,6 +57,7 @@ public class EventsController : ControllerBase
     /// Метод для создания мероприятия
     /// </summary>
     [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [Produces("application/json")]
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] CreateEventDTO newEvent)
@@ -68,7 +70,9 @@ public class EventsController : ControllerBase
     /// Метод для изменения мероприятия
     /// </summary>
     /// <param name="id">Id мероприятия</param>
+    /// <param name="changedEvent">Данные для изменения мероприятия</param>
     [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpPut("{id}")]

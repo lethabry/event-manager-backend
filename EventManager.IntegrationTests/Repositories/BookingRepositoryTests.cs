@@ -43,7 +43,7 @@ public class BookingRepositoryTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task CreateBooking_ExistingEvent_CreteBooking()
+    public async Task CreateBooking_ExistingEvent_CreatesBooking()
     {
         //Arrange
         var now = DateTime.UtcNow;
@@ -83,7 +83,7 @@ public class BookingRepositoryTests : IAsyncLifetime
             () => repository.CreateBookingAsync(eventId));
         Assert.Equal(eventId, exception.EventId);
     }
-    
+
     [Theory]
     [InlineData(1, 20)]
     [InlineData(5, 20)]
@@ -139,7 +139,7 @@ public class BookingRepositoryTests : IAsyncLifetime
             .Select(attempt => attempt.Conflict!)
             .ToList();
 
-        //Arrange
+        //Assert
         Assert.Equal(totalSeats, successfulBookings.Count);
         Assert.Equal(requestCount - totalSeats, conflicts.Count);
         Assert.All(conflicts, exception => Assert.Equal(eventId, exception.EventId));

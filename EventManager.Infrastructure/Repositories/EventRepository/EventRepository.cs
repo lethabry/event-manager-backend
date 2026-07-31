@@ -24,26 +24,20 @@ public class EventRepository : IEventRepository
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<Event>> GetEventsAsync(string? title, DateTime? from, DateTime? to)
+    public async Task<IReadOnlyList<Event>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize)
     {
-        var result = _appDbContext.Events.AsQueryable();
-        if (!string.IsNullOrEmpty(title))
-        {
-            result = result.Where((evt) => evt.Title.ToLower().Contains(title.ToLower()));
-        }
-
-        if (from.HasValue)
-        {
-            result = result.Where((evt) => evt.StartAt >= from.Value);
-        }
-
-        if (to.HasValue)
-        {
-            result = result.Where((evt) => evt.EndAt <= to.Value);
-        }
-
-        var list = await result.Include(e => e.Bookings).ToListAsync();
+        var list = await FilterEvents(title, from, to)
+            .OrderBy(evt => evt.StartAt)
+            .ThenBy(evt => evt.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
         return list.AsReadOnly();
+    }
+
+    public Task<int> GetEventsCountAsync(string? title, DateTime? from, DateTime? to)
+    {
+        return FilterEvents(title, from, to).CountAsync();
     }
 
     public async Task<Event?> GetEventByIdAsync(Guid id)
@@ -60,22 +54,18 @@ public class EventRepository : IEventRepository
         return createdEvent;
     }
 
-    public async Task<Event?> UpdateEventAsync(Guid id, EventInfoDTO eventDto)
+    public async Task<Event?> UpdateEventAsync(Event updatedEvent)
     {
-        var evt = _appDbContext.Events.Include(e => e.Bookings).FirstOrDefault(e => e.Id == id);
-        if (evt == null)
+        var exists = await _appDbContext.Events.AnyAsync(evt => evt.Id == updatedEvent.Id);
+        if (!exists)
         {
             return null;
         }
-        evt.Title = eventDto.Title;
-        evt.StartAt = eventDto.StartAt;
-        evt.EndAt = eventDto.EndAt;
-        evt.TotalSeats = eventDto.TotalSeats;
-        evt.AvailableSeats = eventDto.AvailableSeats;
-        evt.Description = eventDto.Description;
-        _logger.LogDebug("Updating event {EventId}", id);
+
+        _appDbContext.Update(updatedEvent);
+        _logger.LogDebug("Updating event {EventId}", updatedEvent.Id);
         await _appDbContext.SaveChangesAsync();
-        return evt;
+        return updatedEvent;
     }
 
     public async Task<bool> DeleteEventAsync(Guid id)
@@ -89,5 +79,26 @@ public class EventRepository : IEventRepository
         _appDbContext.Events.Remove(evt);
         await _appDbContext.SaveChangesAsync();
         return true;
+    }
+
+    private IQueryable<Event> FilterEvents(string? title, DateTime? from, DateTime? to)
+    {
+        var query = _appDbContext.Events.AsQueryable();
+        if (!string.IsNullOrEmpty(title))
+        {
+            query = query.Where(evt => evt.Title.ToLower().Contains(title.ToLower()));
+        }
+
+        if (from.HasValue)
+        {
+            query = query.Where(evt => evt.StartAt >= from.Value);
+        }
+
+        if (to.HasValue)
+        {
+            query = query.Where(evt => evt.EndAt <= to.Value);
+        }
+
+        return query;
     }
 }

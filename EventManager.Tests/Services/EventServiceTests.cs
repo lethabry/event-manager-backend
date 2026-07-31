@@ -286,7 +286,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await act.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Дата начала мероприятия должны быть раньше даты окончания мероприятия");
         _mockValidationService.Verify(x => x.ValidatePaginatedResult(fromDate, toDate, 1, 10), Times.Once);
     }
@@ -306,7 +306,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Номер страницы не может быть меньше 1");
     }
 
@@ -325,7 +325,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Количество элементов не может быть меньше 1");
     }
 
@@ -355,7 +355,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventNotFoundException>()
                 .WithMessage($"Мероприятие с id {randomId} не найдено");
     }
 
@@ -430,7 +430,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Название мероприятия не может быть пустым");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -455,7 +455,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Дата начала мероприятия должна быть заполнена");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -480,7 +480,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Дата конца мероприятия должна быть заполнена");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -505,7 +505,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -530,7 +530,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Количество мест должно быть больше 0");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -555,7 +555,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Количество мест должно быть больше 0");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -575,7 +575,7 @@ public class EventServiceTests : IDisposable
             TotalSeats = 5,
             AvailableSeats = 5,
         };
-        var updateEvent = Event.Create("Новое название", updateEventDTO.StartAt, updateEventDTO.EndAt, 5, 5, "Новое описание");
+        var updateEvent = Event.Reconstruct("Новое название", updateEventDTO.StartAt, updateEventDTO.EndAt, 5, 5, "Новое описание");
 
         //Act
         var result = await _eventService.UpdateEventAsync(evnt.Id, updateEventDTO);
@@ -600,7 +600,7 @@ public class EventServiceTests : IDisposable
             TotalSeats = 5,
             AvailableSeats = 5
         };
-        var updateEvent = Event.Create("Новое название", updateEventDTO.StartAt, updateEventDTO.EndAt, 5, 5);
+        var updateEvent = Event.Reconstruct("Новое название", updateEventDTO.StartAt, updateEventDTO.EndAt, 5, 5);
 
         //Act
         var result = await _eventService.UpdateEventAsync(evnt.Id, updateEventDTO);
@@ -631,7 +631,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventNotFoundException>()
                 .WithMessage($"Мероприятие с id {evntId} не найдено");
         _mockValidationService.Verify(x => x.ValidateEventDTO(updateEventDTO), Times.Once);
     }
@@ -658,7 +658,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Название мероприятия не может быть пустым");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -685,7 +685,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Дата начала мероприятия должна быть заполнена");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -712,7 +712,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-            .ThrowAsync<EventException>()
+            .ThrowAsync<EventValidationException>()
             .WithMessage("Дата конца мероприятия должна быть заполнена");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -739,7 +739,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -766,7 +766,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Количество мест должно быть больше 0");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -793,7 +793,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Количество мест должно быть больше 0");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -820,7 +820,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Количество мест должно быть больше 0");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -847,7 +847,7 @@ public class EventServiceTests : IDisposable
 
         //Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventValidationException>()
                 .WithMessage("Количество доступных мест не может быть больше мест всего");
         _mockValidationService.Verify(x => x.ValidateEventDTO(evnt), Times.Once);
     }
@@ -878,7 +878,7 @@ public class EventServiceTests : IDisposable
 
         // Assert
         await result.Should()
-                .ThrowAsync<EventException>()
+                .ThrowAsync<EventNotFoundException>()
                 .WithMessage($"Мероприятие с id {evntId} не найдено");
     }
 }

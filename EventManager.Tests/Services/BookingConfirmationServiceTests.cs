@@ -1,4 +1,5 @@
 using EventManager.Application.Interfaces;
+using EventManager.Application.DTOs;
 using EventManager.Application.Services.BookingConfirmationService;
 using EventManager.Application.Services.EventService;
 using EventManager.Domain.Common;
@@ -106,7 +107,7 @@ public class BookingConfirmationServiceTests
             repository => repository.UpdateBookingAsync(booking, It.IsAny<CancellationToken>()),
             Times.Once);
         _mockEventService.Verify(
-            service => service.UpdateEventAsync(It.IsAny<Guid>(), It.IsAny<EventManager.Application.DTOs.EventInfoDTO>()),
+            service => service.UpdateEventAsync(It.IsAny<Guid>(), It.IsAny<EventInfoDTO>()),
             Times.Never);
     }
 
@@ -128,6 +129,9 @@ public class BookingConfirmationServiceTests
         //Assert
         Assert.Equal(BookingStatus.Rejected, booking.Status);
         _mockRepository.Verify(repository => repository.GetBookingByIdAsync(booking.Id), Times.Once);
+        _mockRepository.Verify(
+            repository => repository.UpdateBookingAsync(booking, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

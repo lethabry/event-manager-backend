@@ -31,7 +31,7 @@ public class ErrorHandlingMiddleware
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         var statusCode = GetStatusCode(exception);
-        var isUnexpected = statusCode == StatusCodes.Status500InternalServerError;
+        var isUnexpected = statusCode == StatusCodes.Status500InternalServerError && exception is not EventException;
 
         if (isUnexpected)
         {
@@ -67,9 +67,10 @@ public class ErrorHandlingMiddleware
     {
         return exception switch
         {
-            OperationCanceledException => 499,
+            OperationCanceledException => StatusCodes.Status409Conflict,
             EventValidationException => StatusCodes.Status400BadRequest,
             EventNotFoundException => StatusCodes.Status404NotFound,
+            EventDeletionFailedException => StatusCodes.Status500InternalServerError,
             BookingNotFoundException => StatusCodes.Status404NotFound,
             NoAvailableSeatsException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError

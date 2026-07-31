@@ -9,10 +9,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace EventManager.Migrations
+namespace EventManager.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260721074116_InitialCreate")]
+    [Migration("20260731103910_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -25,7 +25,7 @@ namespace EventManager.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("EventManager.Models.Booking", b =>
+            modelBuilder.Entity("EventManager.Domain.Models.Booking", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -60,7 +60,7 @@ namespace EventManager.Migrations
                     b.ToTable("bookings", (string)null);
                 });
 
-            modelBuilder.Entity("EventManager.Models.Event", b =>
+            modelBuilder.Entity("EventManager.Domain.Models.Event", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -102,9 +102,9 @@ namespace EventManager.Migrations
                     b.ToTable("events", (string)null);
                 });
 
-            modelBuilder.Entity("EventManager.Models.Booking", b =>
+            modelBuilder.Entity("EventManager.Domain.Models.Booking", b =>
                 {
-                    b.HasOne("EventManager.Models.Event", "Event")
+                    b.HasOne("EventManager.Domain.Models.Event", "Event")
                         .WithMany("Bookings")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -113,7 +113,7 @@ namespace EventManager.Migrations
                     b.Navigation("Event");
                 });
 
-            modelBuilder.Entity("EventManager.Models.Event", b =>
+            modelBuilder.Entity("EventManager.Domain.Models.Event", b =>
                 {
                     b.Navigation("Bookings");
                 });

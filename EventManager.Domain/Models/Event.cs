@@ -1,51 +1,65 @@
-#nullable disable
 using EventManager.Domain.Exceptions;
 
 namespace EventManager.Domain.Models;
 
 public class Event
 {
-    private readonly object _reverseLocker = new object();
     public Guid Id { get; init; } = Guid.NewGuid();
-    public string Title { get; set; }
-    public string? Description { get; set; }
-    public DateTime StartAt { get; set; }
-    public DateTime EndAt { get; set; }
-    public int TotalSeats { get; set; }
-    public int AvailableSeats { get; set; }
-    public List<Booking> Bookings { get; set; }
+    public string Title { get; private set; } = null!;
+    public string? Description { get; private set; }
+    public DateTime StartAt { get; private set; }
+    public DateTime EndAt { get; private set; }
+    public int TotalSeats { get; private set; }
+    public int AvailableSeats { get; private set; }
+    public List<Booking> Bookings { get; private set; } = [];
 
     private Event()
     {
 
     }
 
-    public static Event Create(string title, DateTime startAt, DateTime endAt, int totalSeats, string description = null)
+    public static Event Create(string title, DateTime startAt, DateTime endAt, int totalSeats, string? description = null)
     {
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            throw new EventValidationException("Название должно быть обязательным");
-        }
-        if (startAt >= endAt)
-        {
-            throw new EventValidationException("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия");
-        }
-        if (totalSeats <= 0)
-        {
-            throw new EventValidationException("Количество мест должно быть больше 0");
-        }
-        return new Event()
-        {
-            Title = title,
-            Description = description,
-            StartAt = startAt,
-            EndAt = endAt,
-            TotalSeats = totalSeats,
-            AvailableSeats = totalSeats
-        };
+        return Reconstruct(title, startAt, endAt, totalSeats, totalSeats, description);
     }
 
-    public static Event Create(string title, DateTime startAt, DateTime endAt, int totalSeats, int availableSeats, string description = null)
+    public static Event Reconstruct(string title, DateTime startAt, DateTime endAt, int totalSeats, int availableSeats,
+        string? description = null)
+    {
+        var evt = new Event();
+        evt.Update(title, startAt, endAt, totalSeats, availableSeats, description);
+        return evt;
+    }
+
+    public void Update(string title, DateTime startAt, DateTime endAt, int totalSeats, int availableSeats,
+        string? description = null)
+    {
+        Validate(title, startAt, endAt, totalSeats, availableSeats);
+        Title = title;
+        Description = description;
+        StartAt = startAt;
+        EndAt = endAt;
+        TotalSeats = totalSeats;
+        AvailableSeats = availableSeats;
+    }
+
+    public bool TryReserveSeats(int count = 1)
+    {
+        if (AvailableSeats < count)
+        {
+            return false;
+        }
+
+        AvailableSeats -= count;
+        return true;
+    }
+
+    public void ReleaseSeats(int count = 1)
+    {
+        AvailableSeats += count;
+    }
+
+    private static void Validate(string title, DateTime startAt, DateTime endAt, int totalSeats, int availableSeats)
     {
         if (string.IsNullOrWhiteSpace(title))
         {
@@ -67,32 +81,5 @@ public class Event
         {
             throw new EventValidationException("Количество доступных мест не может быть больше мест всего");
         }
-        return new Event()
-        {
-            Title = title,
-            Description = description,
-            StartAt = startAt,
-            EndAt = endAt,
-            TotalSeats = totalSeats,
-            AvailableSeats = availableSeats
-        };
-    }
-
-    public bool TryReserveSeats(int count = 1)
-    {
-        lock (_reverseLocker)
-        {
-            if (AvailableSeats >= count)
-            {
-                AvailableSeats -= count;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void ReleaseSeats(int count = 1)
-    {
-        AvailableSeats += count;
     }
 }
