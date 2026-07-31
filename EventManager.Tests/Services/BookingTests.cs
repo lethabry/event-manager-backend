@@ -1,5 +1,5 @@
-using EventManager.Common;
-using EventManager.Models;
+using EventManager.Domain.Common;
+using EventManager.Domain.Models;
 using FluentAssertions;
 
 namespace EventManager.Tests.Services;

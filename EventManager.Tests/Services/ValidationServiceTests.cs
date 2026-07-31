@@ -1,7 +1,7 @@
 using System.Net;
-using EventManager.Exceptions;
-using EventManager.Models;
-using EventManager.Services.ValidationService;
+using EventManager.Application.DTOs;
+using EventManager.Application.Services.ValidationService;
+using EventManager.Domain.Exceptions;
 using FluentAssertions;
 
 namespace EventManager.Tests.Services;
@@ -88,7 +88,7 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidateEventDTO(validEventDTO);
 
         //Assert
-        result.Should().NotThrow<EventException>();
+        result.Should().NotThrow<EventValidationException>();
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidateEventDTO(validEventDTO);
 
         //Assert
-        result.Should().NotThrow<EventException>();
+        result.Should().NotThrow<EventValidationException>();
     }
 
     [Fact]
@@ -129,9 +129,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Название мероприятия не может быть пустым")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            ;
     }
 
     [Fact]
@@ -152,9 +152,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Название мероприятия не может быть пустым")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            ;
     }
 
     [Fact]
@@ -175,9 +175,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Название мероприятия не может быть пустым")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            ;
     }
 
     [Fact]
@@ -198,9 +198,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Дата начала мероприятия должна быть заполнена")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            ;
     }
 
     [Fact]
@@ -221,9 +221,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Дата конца мероприятия должна быть заполнена")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            ;
     }
 
     [Fact]
@@ -245,9 +245,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            ;
     }
 
     [Fact]
@@ -268,9 +268,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            ;
     }
 
     [Fact]
@@ -291,9 +291,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Количество мест должно быть больше 0")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            ;
     }
 
 
@@ -315,9 +315,8 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
-            .WithMessage("Количество мест должно быть больше 0")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            .Throw<EventValidationException>()
+            .WithMessage("Количество мест должно быть больше 0");
     }
 
     [Fact]
@@ -338,9 +337,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Количество доступных мест должно быть не меньше 0")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            ;
     }
 
     [Fact]
@@ -361,9 +360,9 @@ public class ValidationServiceTests
 
         // Assert
         result.Should()
-            .Throw<EventException>()
+            .Throw<EventValidationException>()
             .WithMessage("Количество доступных мест не может быть больше мест всего")
-            .Where(e => e.statusCode == HttpStatusCode.BadRequest);
+            ;
     }
 
     [Theory]
@@ -375,7 +374,7 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
 
         // Assert
-        result.Should().NotThrow<EventException>();
+        result.Should().NotThrow<EventValidationException>();
     }
 
     [Theory]
@@ -387,7 +386,7 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
 
         // Assert
-        result.Should().Throw<EventException>().Where(e => e.statusCode == HttpStatusCode.BadRequest).WithMessage("Дата начала мероприятия должны быть раньше даты окончания мероприятия");
+        result.Should().Throw<EventValidationException>().WithMessage("Дата начала мероприятия должны быть раньше даты окончания мероприятия");
     }
 
     [Theory]
@@ -399,7 +398,7 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
 
         // Assert
-        result.Should().Throw<EventException>().Where(e => e.statusCode == HttpStatusCode.BadRequest).WithMessage("Количество элементов не может быть меньше 1");
+        result.Should().Throw<EventValidationException>().WithMessage("Количество элементов не может быть меньше 1");
     }
 
     [Theory]
@@ -411,6 +410,6 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
 
         // Assert
-        result.Should().Throw<EventException>().Where(e => e.statusCode == HttpStatusCode.BadRequest).WithMessage("Номер страницы не может быть меньше 1");
+        result.Should().Throw<EventValidationException>().WithMessage("Номер страницы не может быть меньше 1");
     }
 }

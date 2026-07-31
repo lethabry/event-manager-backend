@@ -1,12 +1,11 @@
-using System.Runtime.InteropServices.JavaScript;
-using EventManager.Data.EventRepository;
-using EventManager.Models;
-namespace EventManager.IntegrationTests.Repositories;
-
-using EventManager.Data.DataAccess;
+using EventManager.Application.DTOs;
+using EventManager.Domain.Models;
+using EventManager.Infrastructure.DataAccess;
+using EventManager.Infrastructure.Repositories.EventRepository;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Testcontainers.PostgreSql;
+
+namespace EventManager.IntegrationTests.Repositories;
 
 public class EventRepositoryTests : IAsyncLifetime
 {
@@ -133,7 +132,7 @@ public class EventRepositoryTests : IAsyncLifetime
 
         //Act
         var repository = new EventRepository(CreateContext());
-        var events = await repository.GetEventsAsync(null, null, null);
+        var events = await repository.GetEventsAsync(null, null, null, 1, 10);
 
         //Assert
         Assert.NotNull(events);
@@ -154,7 +153,7 @@ public class EventRepositoryTests : IAsyncLifetime
 
         //Act
         var repository = new EventRepository(CreateContext());
-        var events = await repository.GetEventsAsync("new", null, null);
+        var events = await repository.GetEventsAsync("new", null, null, 1, 10);
 
         //Assert
         Assert.NotNull(events);
@@ -176,7 +175,7 @@ public class EventRepositoryTests : IAsyncLifetime
 
         //Act
         var repository = new EventRepository(CreateContext());
-        var events = await repository.GetEventsAsync(null, now.AddDays(-1), null);
+        var events = await repository.GetEventsAsync(null, now.AddDays(-1), null, 1, 10);
 
         //Assert
         Assert.NotNull(events);
@@ -198,7 +197,7 @@ public class EventRepositoryTests : IAsyncLifetime
 
         //Act
         var repository = new EventRepository(CreateContext());
-        var events = await repository.GetEventsAsync(null, null, now);
+        var events = await repository.GetEventsAsync(null, null, now, 1, 10);
 
         //Assert
         Assert.NotNull(events);
@@ -221,7 +220,7 @@ public class EventRepositoryTests : IAsyncLifetime
 
         //Act
         var repository = new EventRepository(CreateContext());
-        var events = await repository.GetEventsAsync("test", now, now.AddDays(1));
+        var events = await repository.GetEventsAsync("test", now, now.AddDays(1), 1, 10);
 
         //Assert
         Assert.NotNull(events);
@@ -244,7 +243,7 @@ public class EventRepositoryTests : IAsyncLifetime
 
         //Act
         var repository = new EventRepository(CreateContext());
-        var events = await repository.GetEventsAsync(null, now, now.AddDays(-1));
+        var events = await repository.GetEventsAsync(null, now, now.AddDays(-1), 1, 10);
 
         //Assert
         Assert.NotNull(events);
@@ -259,7 +258,7 @@ public class EventRepositoryTests : IAsyncLifetime
 
         //Act
         var repository = new EventRepository(CreateContext());
-        var events = await repository.GetEventsAsync(null, null, null);
+        var events = await repository.GetEventsAsync(null, null, null, 1, 10);
 
         //Assert
         Assert.NotNull(events);
@@ -335,22 +334,11 @@ public class EventRepositoryTests : IAsyncLifetime
         //Arrange
         await ResetDatabaseAsync();
         var now = DateTime.UtcNow;
-        await using var context = CreateContext();
-        var evt1 = Event.Create("Test Event", now, now.AddDays(1), 5);
-        await context.Events.AddAsync(evt1);
-        await context.SaveChangesAsync();
+        var updatedEvent = Event.Create("Test Event", now, now.AddDays(1), 5);
 
         //Act
         var repository = new EventRepository(CreateContext());
-        var evtInfo = new EventInfoDTO()
-        {
-            Title = "Test Event",
-            Description = "Test Description",
-            AvailableSeats = 5,
-            StartAt = now,
-            EndAt = now.AddDays(1),
-        };
-        var updatedEvt = await repository.UpdateEventAsync(Guid.NewGuid(), evtInfo);
+        var updatedEvt = await repository.UpdateEventAsync(updatedEvent);
 
         //Assert
         Assert.Null(updatedEvt);
@@ -369,21 +357,14 @@ public class EventRepositoryTests : IAsyncLifetime
 
         //Act
         var repository = new EventRepository(CreateContext());
-        var evtInfo = new EventInfoDTO()
-        {
-            Title = "New ",
-            Description = "Test Description",
-            AvailableSeats = 5,
-            StartAt = now.AddDays(1),
-            EndAt = now.AddDays(2),
-        };
-        var updatedEvt = await repository.UpdateEventAsync(evt1.Id, evtInfo);
+        evt1.Update("New ", now.AddDays(1), now.AddDays(2), 5, 5, "Test Description");
+        var updatedEvt = await repository.UpdateEventAsync(evt1);
 
         //Assert
         Assert.NotNull(updatedEvt);
-        Assert.Equal(updatedEvt.Title, evtInfo.Title);
-        Assert.Equal(updatedEvt.Description, evtInfo.Description);
-        Assert.Equal(updatedEvt.AvailableSeats, evtInfo.AvailableSeats);
+        Assert.Equal(updatedEvt.Title, evt1.Title);
+        Assert.Equal(updatedEvt.Description, evt1.Description);
+        Assert.Equal(updatedEvt.AvailableSeats, evt1.AvailableSeats);
     }
 
     [Fact]

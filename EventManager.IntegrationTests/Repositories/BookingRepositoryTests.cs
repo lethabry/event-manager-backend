@@ -1,22 +1,24 @@
-﻿using EventManager.Common;
-using EventManager.Data.BookingRepository;
-using EventManager.Data.DataAccess;
-using EventManager.Exceptions;
-using EventManager.Models;
+using EventManager.Domain.Common;
+using EventManager.Domain.Exceptions;
+using EventManager.Domain.Models;
+using EventManager.Infrastructure.DataAccess;
+using EventManager.Infrastructure.Repositories.BookingRepository;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using Testcontainers.PostgreSql;
+
 namespace EventManager.IntegrationTests.Repositories;
 
 public class BookingRepositoryTests : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
         .Build();
 
     public async Task InitializeAsync()
     {
         await _postgres.StartAsync();
+
+        await using var context = CreateContext();
+        await context.Database.MigrateAsync();
     }
 
     public async Task DisposeAsync()
@@ -30,9 +32,7 @@ public class BookingRepositoryTests : IAsyncLifetime
             .UseNpgsql(_postgres.GetConnectionString())
             .Options;
 
-        var context = new AppDbContext(options);
-        context.Database.Migrate();
-        return context;
+        return new AppDbContext(options);
     }
 
     private async Task ResetDatabaseAsync()
@@ -43,7 +43,7 @@ public class BookingRepositoryTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task CreateBooking_ExistingEvent_CreteBooking()
+    public async Task CreateBooking_ExistingEvent_CreatesBooking()
     {
         //Arrange
         var now = DateTime.UtcNow;
@@ -54,28 +54,110 @@ public class BookingRepositoryTests : IAsyncLifetime
         await context.SaveChangesAsync();
 
         //Act
-        var repository = new BookingRepository(CreateContext());
+        await using var repositoryContext = CreateContext();
+        var repository = new BookingRepository(repositoryContext);
         var booking = await repository.CreateBookingAsync(evt1.Id);
+        await using var verificationContext = CreateContext();
+        var savedEvent = await verificationContext.Events.SingleAsync(e => e.Id == evt1.Id);
+        var savedBookings = await verificationContext.Bookings.Where(b => b.EventId == evt1.Id).ToListAsync();
 
         //Assert
         Assert.NotNull(booking);
         Assert.Equal(evt1.Id, booking.EventId);
+        Assert.Equal(4, savedEvent.AvailableSeats);
+        Assert.Single(savedBookings);
+        Assert.Equal(booking.Id, savedBookings[0].Id);
     }
 
     [Fact]
     public async Task CreateBooking_NotExistingEvent_ThrowException()
     {
         //Arrange
-        var now = DateTime.UtcNow;
         await ResetDatabaseAsync();
         await using var context = CreateContext();
-        var evt1 = Event.Create("Test Event", now, now.AddDays(1), 5);
-        await context.Events.AddAsync(evt1);
-        await context.SaveChangesAsync();
+        var repository = new BookingRepository(context);
+        var eventId = Guid.NewGuid();
 
         //Act && Assert
-        var repository = new BookingRepository(CreateContext());
-        await Assert.ThrowsAsync<DbUpdateException>(() => repository.CreateBookingAsync(Guid.NewGuid()));
+        var exception = await Assert.ThrowsAsync<EventNotFoundException>(
+            () => repository.CreateBookingAsync(eventId));
+        Assert.Equal(eventId, exception.EventId);
+    }
+
+    [Theory]
+    [InlineData(1, 20)]
+    [InlineData(5, 20)]
+    public async Task CreateBooking_ConcurrentContexts_ShouldNotOverbook(
+        int totalSeats,
+        int requestCount)
+    {
+        //Arrange
+        await ResetDatabaseAsync();
+        var now = DateTime.UtcNow;
+        Guid eventId;
+
+        await using (var seedContext = CreateContext())
+        {
+            var evt = Event.Create("Concurrent Event", now, now.AddDays(1), totalSeats);
+            eventId = evt.Id;
+            await seedContext.Events.AddAsync(evt);
+            await seedContext.SaveChangesAsync();
+        }
+
+        //Act
+        var startGate = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var tasks = Enumerable.Range(0, requestCount)
+            .Select(async _ =>
+            {
+                await startGate.Task;
+                await using var context = CreateContext();
+                var repository = new BookingRepository(context);
+
+                try
+                {
+                    var booking = await repository.CreateBookingAsync(eventId);
+                    return new BookingAttempt(booking, null);
+                }
+                catch (NoAvailableSeatsException exception)
+                {
+                    return new BookingAttempt(null, exception);
+                }
+            })
+            .ToArray();
+
+        startGate.SetResult(true);
+        var attempts = await Task.WhenAll(tasks);
+
+        var successfulBookings = attempts
+            .Where(attempt => attempt.Booking != null)
+            .Select(attempt => attempt.Booking!)
+            .ToList();
+        var conflicts = attempts
+            .Where(attempt => attempt.Conflict != null)
+            .Select(attempt => attempt.Conflict!)
+            .ToList();
+
+        //Assert
+        Assert.Equal(totalSeats, successfulBookings.Count);
+        Assert.Equal(requestCount - totalSeats, conflicts.Count);
+        Assert.All(conflicts, exception => Assert.Equal(eventId, exception.EventId));
+        Assert.Equal(
+            successfulBookings.Count,
+            successfulBookings.Select(booking => booking.Id).Distinct().Count());
+
+        await using var verificationContext = CreateContext();
+        var savedEvent = await verificationContext.Events.SingleAsync(e => e.Id == eventId);
+        var savedBookings = await verificationContext.Bookings
+            .Where(booking => booking.EventId == eventId)
+            .ToListAsync();
+
+        Assert.Equal(0, savedEvent.AvailableSeats);
+        Assert.Equal(totalSeats, savedBookings.Count);
+        Assert.Equal(
+            savedBookings.Count,
+            savedBookings.Select(booking => booking.Id).Distinct().Count());
     }
 
     [Fact]
@@ -202,7 +284,7 @@ public class BookingRepositoryTests : IAsyncLifetime
         //Act
         var repository = new BookingRepository(CreateContext());
         var booking = await repository.GetBookingByIdAsync(booking1.Id);
-        booking?.Confirm();
+        booking.Confirm();
         var updateBooking = await repository.UpdateBookingAsync(booking);
 
         //Assert
@@ -217,7 +299,10 @@ public class BookingRepositoryTests : IAsyncLifetime
         //Act && Arrange
         var booking = new Booking(Guid.NewGuid());
         var repository = new BookingRepository(CreateContext());
-        await Assert.ThrowsAsync<BookingException>(() => repository.UpdateBookingAsync(booking));
+        await Assert.ThrowsAsync<BookingNotFoundException>(() => repository.UpdateBookingAsync(booking));
     }
 
+    private sealed record BookingAttempt(
+        Booking? Booking,
+        NoAvailableSeatsException? Conflict);
 }
