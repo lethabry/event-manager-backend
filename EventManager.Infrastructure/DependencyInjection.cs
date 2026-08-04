@@ -1,4 +1,5 @@
 using EventManager.Application.Interfaces;
+using EventManager.Infrastructure.Configurations;
 using EventManager.Infrastructure.DataAccess;
 using EventManager.Infrastructure.Repositories.BookingRepository;
 using EventManager.Infrastructure.Repositories.EventRepository;
@@ -13,6 +14,10 @@ public static class DependencyInjection
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        services.AddOptions<TokenSettingsConfiguration>()
+            .Bind(configuration.GetRequiredSection(
+                TokenSettingsConfiguration.SectionName))
+            .ValidateOnStart();
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
