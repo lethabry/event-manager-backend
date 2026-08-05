@@ -15,7 +15,7 @@ public class JwtTokenGenerator : ITokenGenerator
         _configuration = configuration.Value;
     }
 
-    public string GenerateToken(UserForTokenDTO user)
+    public string GenerateToken(UserDTO user)
     {
         var claims = new Dictionary<string, object>
         {

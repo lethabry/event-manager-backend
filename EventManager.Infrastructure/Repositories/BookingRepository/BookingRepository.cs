@@ -30,15 +30,27 @@ public class BookingRepository : IBookingRepository
         return await _appDbContext.Bookings.FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    public async Task<Booking> CreateBookingAsync(Guid eventId)
+    public async Task<Booking> CreateBookingAsync(Guid eventId, Guid userId)
     {
         await using var transaction = await _appDbContext.Database.BeginTransactionAsync();
 
-        var exist = await _appDbContext.Events.AnyAsync(e => e.Id == eventId);
+        var existedEvent = await _appDbContext.Events.SingleOrDefaultAsync(e => e.Id == eventId);
 
-        if (!exist)
+        if (existedEvent is null)
         {
             throw new EventNotFoundException(eventId);
+        }
+
+        if (existedEvent.StartAt >= DateTime.UtcNow)
+        {
+            throw new BookingPastEventException(existedEvent.Id);
+        }
+
+        var activeBookings = _appDbContext.Bookings.Count((b) => b.UserId == userId);
+
+        if (activeBookings >= AppConstants.MaxActiveBookings)
+        {
+            throw new ActiveBookingLimitException(userId);
         }
 
         var affected = await _appDbContext.Events
@@ -80,5 +92,22 @@ public class BookingRepository : IBookingRepository
         _appDbContext.Update(updatedBooking);
         await _appDbContext.SaveChangesAsync(ct);
         return updatedBooking;
+    }
+
+    public async Task<bool> CancelBookingAsync(Guid bookingId, Guid userId, UserRole role)
+    {
+        var booking = await GetBookingByIdAsync(bookingId);
+        if (booking == null)
+        {
+            throw new BookingNotFoundException(bookingId);
+        }
+        if (role == UserRole.User && booking.UserId != userId)
+        {
+            throw new AccessDeniedException("Отменять можно только собственные бронирования");
+        }
+        _logger.LogDebug("Cancelling booking {BookingId}", bookingId);
+        booking.Cancel();
+        await _appDbContext.SaveChangesAsync();
+        return true;
     }
 }

@@ -7,8 +7,17 @@ public class User
     public string Login { get; init; }
     public string PasswordHash { get; private set; }
     public UserRole Role { get; private set; }
+    public List<Booking> Bookings { get; private set; } = [];
 
     private User()
     {
+    }
+
+    public User(string login, string passwordHash, UserRole? role)
+    {
+        Id = Guid.NewGuid();
+        Login = login;
+        PasswordHash = passwordHash;
+        Role = role ?? UserRole.User;
     }
 }

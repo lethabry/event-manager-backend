@@ -73,6 +73,11 @@ public class ErrorHandlingMiddleware
             EventDeletionFailedException => StatusCodes.Status500InternalServerError,
             BookingNotFoundException => StatusCodes.Status404NotFound,
             NoAvailableSeatsException => StatusCodes.Status409Conflict,
+            BookingPastEventException => StatusCodes.Status400BadRequest,
+            ActiveBookingLimitException => StatusCodes.Status409Conflict,
+            AccessDeniedException => StatusCodes.Status403Forbidden,
+            UserValidationException => StatusCodes.Status400BadRequest,
+            UserNotFoundException => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError
         };
     }

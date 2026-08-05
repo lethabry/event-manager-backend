@@ -17,5 +17,6 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.Property(e => e.ProcessedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("processed_at");
 
         builder.HasOne(d => d.Event).WithMany(p => p.Bookings).HasForeignKey(d => d.EventId);
+        builder.HasOne(d=> d.User).WithMany(p => p.Bookings).HasForeignKey(d => d.UserId);
     }
 }

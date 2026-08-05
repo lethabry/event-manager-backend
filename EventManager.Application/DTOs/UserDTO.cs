@@ -1,7 +1,7 @@
 using EventManager.Domain.Common;
 namespace EventManager.Application.DTOs;
 
-public record UserForTokenDTO()
+public record UserDTO()
 {
     public Guid Id { get; set; }
     public string Login { get; set; }

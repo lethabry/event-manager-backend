@@ -92,4 +92,50 @@ public class ValidationService : IValidationService
             throw new EventValidationException("Количество элементов не может быть меньше 1");
         }
     }
+
+    public void ValidateUser(CreatingUserDTO user)
+    {
+        if (string.IsNullOrEmpty(user.Login))
+        {
+            throw new UserValidationException("Логин не может быть пустым");
+        }
+
+        if (user.Login.Length < 3)
+        {
+            throw new UserValidationException("Логин слишком короткий");
+        }
+
+        if (string.IsNullOrEmpty(user.Password))
+        {
+            throw new UserValidationException("Пароль не может быть пустым");
+        }
+
+        if (user.Password.Length < 6)
+        {
+            throw new UserValidationException("Пароль слишком короткий");
+        }
+    }
+
+    public void ValidateUser(LogingUserDTO user)
+    {
+        if (string.IsNullOrEmpty(user.Login))
+        {
+            throw new UserValidationException("Логин не может быть пустым");
+        }
+
+        if (user.Login.Length < 3)
+        {
+            throw new UserValidationException("Логин слишком короткий");
+        }
+
+        if (string.IsNullOrEmpty(user.Password))
+        {
+            throw new UserValidationException("Пароль не может быть пустым");
+        }
+
+        if (user.Password.Length < 6)
+        {
+            throw new UserValidationException("Пароль слишком короткий");
+        }
+    }
 }

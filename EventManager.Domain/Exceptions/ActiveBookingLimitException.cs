@@ -2,22 +2,22 @@ namespace EventManager.Domain.Exceptions;
 
 public class ActiveBookingLimitException : BookingException
 {
-    public Guid EventId { get; }
+    public Guid UserId { get; }
 
-    public ActiveBookingLimitException(Guid eventId)
-        : this(eventId, $"Превышено количество активных броней для мероприятия с id = {eventId}")
+    public ActiveBookingLimitException(Guid userId)
+        : this(userId, $"Превышено количество активных броней для пользователя с id = {userId}")
     {
     }
 
-    public ActiveBookingLimitException(Guid eventId, string message)
+    public ActiveBookingLimitException(Guid userId, string message)
         : base(message)
     {
-        EventId = eventId;
+        UserId = userId;
     }
 
-    public ActiveBookingLimitException(Guid eventId, string message, Exception inner)
+    public ActiveBookingLimitException(Guid userId, string message, Exception inner)
         : base(message, inner)
     {
-        EventId = eventId;
+        UserId = userId;
     }
 }
