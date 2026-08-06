@@ -1,5 +1,5 @@
 using EventManager.Application.DTOs;
-namespace EventManager.Infrastructure.Services;
+namespace EventManager.Application.Interfaces;
 
 public interface ITokenGenerator
 {

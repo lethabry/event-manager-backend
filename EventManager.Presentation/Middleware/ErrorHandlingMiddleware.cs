@@ -78,6 +78,8 @@ public class ErrorHandlingMiddleware
             AccessDeniedException => StatusCodes.Status403Forbidden,
             UserValidationException => StatusCodes.Status400BadRequest,
             UserNotFoundException => StatusCodes.Status404NotFound,
+            BookingStatusConflictException => StatusCodes.Status409Conflict,
+            UserExistException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
         };
     }

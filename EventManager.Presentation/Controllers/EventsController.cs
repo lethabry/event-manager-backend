@@ -1,11 +1,14 @@
+using System.Security.Claims;
 using EventManager.Application.DTOs;
 using EventManager.Application.Services.BookingService;
 using EventManager.Application.Services.EventService;
 using EventManager.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventManager.Presentation.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -28,6 +31,7 @@ public class EventsController : ControllerBase
     /// <param name="to">Фильтрация до конкретной даты мероприятия</param>>
     /// <param name="page">Номер страницы</param>>
     /// <param name="pageSize">Количество элементов в странице</param>>
+    [AllowAnonymous]
     [ProducesResponseType(typeof(PaginatedResponseDTO<EventResponseDTO>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [Produces("application/json")]
@@ -42,7 +46,8 @@ public class EventsController : ControllerBase
     /// <summary>
     /// Метод для получения мероприятия по id
     /// </summary>
-    /// <param name="id">Id мероприятия</param> 
+    /// <param name="id">Id мероприятия</param>
+    [AllowAnonymous]
     [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
@@ -56,8 +61,11 @@ public class EventsController : ControllerBase
     /// <summary>
     /// Метод для создания мероприятия
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Produces("application/json")]
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] CreateEventDTO newEvent)
@@ -71,8 +79,11 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="id">Id мероприятия</param>
     /// <param name="changedEvent">Данные для изменения мероприятия</param>
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType( StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpPut("{id}")]
@@ -86,7 +97,11 @@ public class EventsController : ControllerBase
     /// Метод для удаления мероприятия
     /// </summary>
     /// <param name="id">Id мероприятия</param>
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType( StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType( StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -99,12 +114,22 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="eventId">Id мероприятия</param>
     [ProducesResponseType(typeof(BookingDTO), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [HttpPost("{eventId}/book")]
     public async Task<IActionResult> Book(Guid eventId)
     {
-        var booking = await _bookingService.CreateBookingAsync(eventId);
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null)
+        {
+            return NotFound("Идентификатор пользователя не найден");
+        }
+
+        var userId = Guid.Parse(userIdClaim.Value);
+        var booking = await _bookingService.CreateBookingAsync(eventId, userId);
         return AcceptedAtAction(
             actionName: nameof(BookingsController.GetById),
             controllerName: "Bookings",

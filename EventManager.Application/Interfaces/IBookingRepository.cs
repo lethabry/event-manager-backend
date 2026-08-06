@@ -9,4 +9,5 @@ public interface IBookingRepository
     public Task<bool> CancelBookingAsync(Guid bookingId, Guid userId, UserRole role);
     public Task<IReadOnlyList<Booking>> GetBookingsAsync(BookingStatus? status = null);
     public Task<Booking?> UpdateBookingAsync(Booking updatedBooking, CancellationToken cancellationToken = default);
+    public Task<int> GetCountOfActiveBookingsAsync(Guid userId);
 }

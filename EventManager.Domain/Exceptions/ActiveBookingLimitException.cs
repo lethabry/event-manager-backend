@@ -1,3 +1,4 @@
+using EventManager.Domain.Common;
 namespace EventManager.Domain.Exceptions;
 
 public class ActiveBookingLimitException : BookingException
@@ -5,7 +6,7 @@ public class ActiveBookingLimitException : BookingException
     public Guid UserId { get; }
 
     public ActiveBookingLimitException(Guid userId)
-        : this(userId, $"Превышено количество активных броней для пользователя с id = {userId}")
+        : this(userId, $"Превышено количество активных броней для пользователя с id = {userId}. Активных броней может быть не больше {AppConstants.MaxActiveBookings}")
     {
     }
 

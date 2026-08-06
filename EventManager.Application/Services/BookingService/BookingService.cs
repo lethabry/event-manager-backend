@@ -1,8 +1,7 @@
 using EventManager.Application.DTOs;
 using EventManager.Application.Interfaces;
-using EventManager.Application.Services.EventService;
+using EventManager.Domain.Common;
 using EventManager.Domain.Exceptions;
-using Microsoft.Extensions.Logging;
 namespace EventManager.Application.Services.BookingService;
 
 public class BookingService : IBookingService
@@ -25,10 +24,15 @@ public class BookingService : IBookingService
         return new BookingDTO(booking);
     }
 
-    public async Task<BookingDTO?> CreateBookingAsync(Guid eventId)
+    public async Task<BookingDTO?> CreateBookingAsync(Guid eventId, Guid userId)
     {
-        var booking = await _bookingRepository.CreateBookingAsync(eventId);
+        var booking = await _bookingRepository.CreateBookingAsync(eventId, userId);
         var bookingDto = new BookingDTO(booking);
         return bookingDto;
+    }
+
+    public async Task CancelBookingAsync(Guid bookingId, Guid userId, UserRole role)
+    {
+        await _bookingRepository.CancelBookingAsync(bookingId, userId, role);
     }
 }

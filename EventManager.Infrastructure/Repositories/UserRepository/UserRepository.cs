@@ -29,21 +29,20 @@ public class UserRepository : IUserRepository
         _tokenGenerator = tokenGenerator;
     }
 
-    public async Task<string> RegisterUserAsync(CreatingUserDTO user)
+    public async Task RegisterUserAsync(CreatingUserDTO user)
     {
         _logger.LogInformation("Start creating user in database");
+
+        var isExist = await _appDbContext.Users.AnyAsync(u => u.Login == user.Login);
+        if (isExist)
+        {
+            throw new UserExistException("Пользователь с таким логином уже существует");
+        }
+
         var passwordHash = _hasher.GetHash(user.Password);
         var createdUser = new User(user.Login, passwordHash, user.Role);
         await _appDbContext.Users.AddAsync(createdUser);
         await _appDbContext.SaveChangesAsync();
-        var userTokenInfo = new UserDTO()
-        {
-            Id = createdUser.Id,
-            Login = createdUser.Login,
-            Role = createdUser.Role,
-        };
-        var token = _tokenGenerator.GenerateToken(userTokenInfo);
-        return token;
     }
 
     public async Task<string> LoginUserAsync(LogingUserDTO user)

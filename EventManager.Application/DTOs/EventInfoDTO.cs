@@ -4,7 +4,7 @@ namespace EventManager.Application.DTOs;
 public record EventInfoDTO
 {
     [Required(ErrorMessage = "Название мероприятия обязательно к заполнению")]
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
 
     public string? Description { get; set; }
 

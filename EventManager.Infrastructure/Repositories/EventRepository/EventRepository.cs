@@ -42,7 +42,7 @@ public class EventRepository : IEventRepository
 
     public async Task<Event?> GetEventByIdAsync(Guid id)
     {
-        return await _appDbContext.Events.Select(e => e).Where(e => e.Id == id).Include(e => e.Bookings).FirstOrDefaultAsync();
+        return await _appDbContext.Events.FirstOrDefaultAsync(evt => evt.Id == id);
     }
 
     public async Task<Event?> CreateEventAsync(CreateEventDTO newEvent)
@@ -62,7 +62,10 @@ public class EventRepository : IEventRepository
             return null;
         }
 
-        _appDbContext.Update(updatedEvent);
+        if (_appDbContext.Entry(updatedEvent).State == EntityState.Detached)
+        {
+            _appDbContext.Events.Update(updatedEvent);
+        }
         _logger.LogDebug("Updating event {EventId}", updatedEvent.Id);
         await _appDbContext.SaveChangesAsync();
         return updatedEvent;

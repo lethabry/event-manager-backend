@@ -14,11 +14,10 @@ public class UserService : IUserService
         _validationService = validationService;
     }
 
-    public async Task<UserTokenResult> RegisterUserAsync(CreatingUserDTO user)
+    public async Task RegisterUserAsync(CreatingUserDTO user)
     {
         _validationService.ValidateUser(user);
-        var token = await _userRepository.RegisterUserAsync(user);
-        return new UserTokenResult(token);
+        await _userRepository.RegisterUserAsync(user);
     }
 
     public async Task<UserTokenResult> LoginUserAsync(LogingUserDTO user)

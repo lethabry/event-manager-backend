@@ -4,8 +4,8 @@ namespace EventManager.Domain.Models;
 public class User
 {
     public Guid Id { get; init; }
-    public string Login { get; init; }
-    public string PasswordHash { get; private set; }
+    public string Login { get; init; } = null!;
+    public string PasswordHash { get; private set; } = null!;
     public UserRole Role { get; private set; }
     public List<Booking> Bookings { get; private set; } = [];
 

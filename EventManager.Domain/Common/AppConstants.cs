@@ -1,7 +1,7 @@
 namespace EventManager.Domain.Common;
 
-public class AppConstants
+public static class AppConstants
 {
-    public static readonly int DelayBetweenBookingConfirmationInteration = 15000;
-    public static readonly int MaxActiveBookings = 10;
+    public const int DelayBetweenBookingConfirmationInteration = 15000;
+    public const int MaxActiveBookings = 10;
 }

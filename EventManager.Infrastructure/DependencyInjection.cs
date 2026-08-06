@@ -18,14 +18,13 @@ public static class DependencyInjection
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
         services.AddOptions<TokenSettingsConfiguration>()
             .Bind(configuration.GetRequiredSection(
-                TokenSettingsConfiguration.SectionName))
-            .ValidateOnStart();
+                TokenSettingsConfiguration.SectionName));
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddSingleton<IHasher, Hasher>();
-        services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
+        services.AddSingleton<ITokenGenerator, JwtTokenGeneratorService>();
 
         return services;
     }

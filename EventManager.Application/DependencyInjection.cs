@@ -1,6 +1,7 @@
 using EventManager.Application.Services.BookingConfirmationService;
 using EventManager.Application.Services.BookingService;
 using EventManager.Application.Services.EventService;
+using EventManager.Application.Services.UserService;
 using EventManager.Application.Services.ValidationService;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IValidationService, ValidationService>();
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IUserService, UserService>();
         services.AddScoped<IBookingConfirmationService, BookingConfirmationService>();
 
         return services;

@@ -58,6 +58,14 @@ public class BookingConfirmationService : IBookingConfirmationService
             return;
         }
 
+        var activeBookingForUser = await _bookingRepository.GetCountOfActiveBookingsAsync(booking.UserId);
+
+        if (activeBookingForUser > AppConstants.MaxActiveBookings)
+        {
+            await RejectBookingAsync(booking, evt, ct);
+            return;
+        }
+
         if (!booking.Confirm())
         {
             return;
@@ -73,7 +81,11 @@ public class BookingConfirmationService : IBookingConfirmationService
             return;
         }
 
-        await _bookingRepository.UpdateBookingAsync(booking, ct);
+        var updatedBooking = await _bookingRepository.UpdateBookingAsync(booking, ct);
+        if (updatedBooking == null)
+        {
+            return;
+        }
 
         if (evt == null)
         {

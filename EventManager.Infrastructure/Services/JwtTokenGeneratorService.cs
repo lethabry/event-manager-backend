@@ -1,16 +1,17 @@
 using System.Text;
 using EventManager.Application.DTOs;
+using EventManager.Application.Interfaces;
 using EventManager.Infrastructure.Configurations;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 namespace EventManager.Infrastructure.Services;
 
-public class JwtTokenGenerator : ITokenGenerator
+public class JwtTokenGeneratorService : ITokenGenerator
 {
     private readonly TokenSettingsConfiguration _configuration;
 
-    public JwtTokenGenerator(IOptions<TokenSettingsConfiguration> configuration)
+    public JwtTokenGeneratorService(IOptions<TokenSettingsConfiguration> configuration)
     {
         _configuration = configuration.Value;
     }
@@ -21,7 +22,7 @@ public class JwtTokenGenerator : ITokenGenerator
         {
             [JwtRegisteredClaimNames.Sub] = user.Id.ToString(),
             ["login"] = user.Login,
-            ["role"] = user.Role,
+            ["role"] = user.Role.ToString(),
             [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
         };
 

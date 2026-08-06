@@ -91,6 +91,11 @@ public class ValidationService : IValidationService
         {
             throw new EventValidationException("Количество элементов не может быть меньше 1");
         }
+
+        if ((long)(page - 1) * pageSize > int.MaxValue)
+        {
+            throw new EventValidationException("Смещение страницы слишком велико");
+        }
     }
 
     public void ValidateUser(CreatingUserDTO user)
