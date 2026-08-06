@@ -22,27 +22,29 @@ public class BookingServiceTests
     public async Task CreateBooking_RepositoryReturnsBooking_ShouldReturnDto()
     {
         var eventId = Guid.NewGuid();
-        var booking = new Booking(eventId);
-        _bookingRepositoryMock.Setup(repository => repository.CreateBookingAsync(eventId)).ReturnsAsync(booking);
+        var userId = Guid.NewGuid();
+        var booking = new Booking(eventId, userId);
+        _bookingRepositoryMock.Setup(repository => repository.CreateBookingAsync(eventId, userId)).ReturnsAsync(booking);
 
-        var result = await _bookingService.CreateBookingAsync(eventId);
+        var result = await _bookingService.CreateBookingAsync(eventId, userId);
 
         result.Should().NotBeNull();
         result!.Id.Should().Be(booking.Id);
         result.EventId.Should().Be(eventId);
         result.Status.Should().Be("Pending");
         result.ProcessedAt.Should().BeNull();
-        _bookingRepositoryMock.Verify(repository => repository.CreateBookingAsync(eventId), Times.Once);
+        _bookingRepositoryMock.Verify(repository => repository.CreateBookingAsync(eventId, userId), Times.Once);
     }
 
     [Fact]
     public async Task CreateBooking_NoAvailableSeats_ShouldPropagateException()
     {
         var eventId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
         var expected = new NoAvailableSeatsException(eventId, "No seats");
-        _bookingRepositoryMock.Setup(repository => repository.CreateBookingAsync(eventId)).ThrowsAsync(expected);
+        _bookingRepositoryMock.Setup(repository => repository.CreateBookingAsync(eventId, userId)).ThrowsAsync(expected);
 
-        var action = () => _bookingService.CreateBookingAsync(eventId);
+        var action = () => _bookingService.CreateBookingAsync(eventId, userId);
 
         await action.Should().ThrowAsync<NoAvailableSeatsException>().Where(b => b.EventId == eventId);
     }
@@ -52,11 +54,12 @@ public class BookingServiceTests
     {
         //Arrange
         var eventId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
         var expected = new EventNotFoundException(eventId);
-        _bookingRepositoryMock.Setup(repository => repository.CreateBookingAsync(eventId)).ThrowsAsync(expected);
+        _bookingRepositoryMock.Setup(repository => repository.CreateBookingAsync(eventId, userId)).ThrowsAsync(expected);
 
         //Act
-        var action = () => _bookingService.CreateBookingAsync(eventId);
+        var action = () => _bookingService.CreateBookingAsync(eventId, userId);
 
         //Assert
         await action.Should().ThrowAsync<EventNotFoundException>().Where(b => b.EventId == eventId);
@@ -66,7 +69,7 @@ public class BookingServiceTests
     public async Task GetBookingById_BookingExists_ShouldReturnDto()
     {
         //Arrange
-        var booking = new Booking(Guid.NewGuid());
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid());
         _bookingRepositoryMock.Setup(repository => repository.GetBookingByIdAsync(booking.Id)).ReturnsAsync(booking);
 
         //Act

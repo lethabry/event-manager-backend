@@ -412,4 +412,102 @@ public class ValidationServiceTests
         // Assert
         result.Should().Throw<EventValidationException>().WithMessage("Номер страницы не может быть меньше 1");
     }
+
+    [Fact]
+    [Trait("ValidateUser", "Success")]
+    public void ValidateUser_CreatingUserDTO_ValidData_ShouldNotThrow()
+    {
+        //Arrange
+        var user = new CreatingUserDTO("validuser", "password123", Domain.Common.UserRole.User);
+
+        //Act
+        var result = () => _validationService.ValidateUser(user);
+
+        //Assert
+        result.Should().NotThrow<UserValidationException>();
+    }
+
+    [Fact]
+    [Trait("ValidateUser", "Success")]
+    public void ValidateUser_LoginUserDTO_ValidData_ShouldNotThrow()
+    {
+        //Arrange
+        var user = new LogingUserDTO { Login = "validuser", Password = "password123" };
+
+        //Act
+        var result = () => _validationService.ValidateUser(user);
+
+        //Assert
+        result.Should().NotThrow<UserValidationException>();
+    }
+
+    [Theory]
+    [Trait("ValidateUser", "ThrowException")]
+    [InlineData("a")]
+    [InlineData("ab")]
+    [InlineData("")]
+    public void ValidateUser_CreatingUserDTO_ShortLogin_ShouldThrowException(string login)
+    {
+        //Arrange
+        var user = new CreatingUserDTO(login, "password123");
+
+        //Act
+        var result = () => _validationService.ValidateUser(user);
+
+        //Assert
+        result.Should().Throw<UserValidationException>().WithMessage("Логин слишком короткий");
+    }
+
+    [Theory]
+    [Trait("ValidateUser", "ThrowException")]
+    [InlineData("a")]
+    [InlineData("abc")]
+    [InlineData("abcde")]
+    [InlineData("")]
+    public void ValidateUser_CreatingUserDTO_ShortPassword_ShouldThrowException(string password)
+    {
+        //Arrange
+        var user = new CreatingUserDTO("validuser", password);
+
+        //Act
+        var result = () => _validationService.ValidateUser(user);
+
+        //Assert
+        result.Should().Throw<UserValidationException>().WithMessage("Пароль слишком короткий");
+    }
+
+    [Theory]
+    [Trait("ValidateUser", "ThrowException")]
+    [InlineData("a")]
+    [InlineData("ab")]
+    [InlineData("")]
+    public void ValidateUser_LogingUserDTO_ShortLogin_ShouldThrowException(string login)
+    {
+        //Arrange
+        var user = new LogingUserDTO { Login = login, Password = "password123" };
+
+        //Act
+        var result = () => _validationService.ValidateUser(user);
+
+        //Assert
+        result.Should().Throw<UserValidationException>().WithMessage("Логин слишком короткий");
+    }
+
+    [Theory]
+    [Trait("ValidateUser", "ThrowException")]
+    [InlineData("a")]
+    [InlineData("abc")]
+    [InlineData("abcde")]
+    [InlineData("")]
+    public void ValidateUser_LogingUserDTO_ShortPassword_ShouldThrowException(string password)
+    {
+        //Arrange
+        var user = new LogingUserDTO { Login = "validuser", Password = password };
+
+        //Act
+        var result = () => _validationService.ValidateUser(user);
+
+        //Assert
+        result.Should().Throw<UserValidationException>().WithMessage("Пароль слишком короткий");
+    }
 }

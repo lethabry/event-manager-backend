@@ -27,7 +27,7 @@ public class BookingConfirmationServiceTests
     {
         //Arrange
         var evt = Event.Create("Test Event", DateTime.Now, DateTime.Now.AddHours(2), 5);
-        var booking = new Booking(evt.Id);
+        var booking = new Booking(evt.Id, Guid.NewGuid());
 
         _mockEventService.Setup(r => r.GetEventByIdAsync(evt.Id)).ReturnsAsync(evt);
         _mockRepository.Setup(r => r.GetBookingByIdAsync(booking.Id)).ReturnsAsync(booking);
@@ -53,9 +53,9 @@ public class BookingConfirmationServiceTests
         var secondEvt = Event.Create("Event 2", DateTime.Now, DateTime.Now.AddHours(2), 5);
         var thirdEvt = Event.Create("Event 3", DateTime.Now, DateTime.Now.AddHours(2), 5);
 
-        var firstBooking = new Booking(firstEvt.Id);
-        var secondBooking = new Booking(secondEvt.Id);
-        var thirdBooking = new Booking(thirdEvt.Id);
+        var firstBooking = new Booking(firstEvt.Id, Guid.NewGuid());
+        var secondBooking = new Booking(secondEvt.Id, Guid.NewGuid());
+        var thirdBooking = new Booking(thirdEvt.Id, Guid.NewGuid());
         List<Booking> pendingBookings = [firstBooking, secondBooking, thirdBooking];
 
         _mockEventService.Setup(r => r.GetEventByIdAsync(firstEvt.Id)).ReturnsAsync(firstEvt);
@@ -89,7 +89,7 @@ public class BookingConfirmationServiceTests
         //Arrange
         var evt = Event.Create("Test Event", DateTime.UtcNow, DateTime.UtcNow.AddHours(2), 1);
         evt.TryReserveSeats();
-        var booking = new Booking(evt.Id);
+        var booking = new Booking(evt.Id, Guid.NewGuid());
 
         _mockEventService.Setup(service => service.GetEventByIdAsync(evt.Id)).ReturnsAsync(evt);
         _mockRepository.Setup(repository => repository.GetBookingByIdAsync(booking.Id)).ReturnsAsync(booking);
@@ -116,7 +116,7 @@ public class BookingConfirmationServiceTests
     {
         //Arrange
         var eventId = Guid.NewGuid();
-        var booking = new Booking(eventId);
+        var booking = new Booking(eventId, Guid.NewGuid());
 
         _mockRepository.Setup(repository => repository.GetBookingByIdAsync(booking.Id)).ReturnsAsync(booking);
         _mockEventService
@@ -139,7 +139,7 @@ public class BookingConfirmationServiceTests
     {
         //Arrange
         var eventId = Guid.NewGuid();
-        var booking = new Booking(eventId);
+        var booking = new Booking(eventId, Guid.NewGuid());
         booking.Confirm();
 
         _mockRepository.Setup(repository => repository.GetBookingByIdAsync(booking.Id)).ReturnsAsync(booking);
