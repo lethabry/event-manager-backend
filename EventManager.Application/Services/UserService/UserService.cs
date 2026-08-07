@@ -20,7 +20,7 @@ public class UserService : IUserService
         await _userRepository.RegisterUserAsync(user);
     }
 
-    public async Task<UserTokenResult> LoginUserAsync(LogingUserDTO user)
+    public async Task<UserTokenResult> LoginUserAsync(LoginUserDTO user)
     {
         _validationService.ValidateUser(user);
         var token = await _userRepository.LoginUserAsync(user);

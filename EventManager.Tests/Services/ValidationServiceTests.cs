@@ -1,4 +1,3 @@
-using System.Net;
 using EventManager.Application.DTOs;
 using EventManager.Application.Services.ValidationService;
 using EventManager.Domain.Exceptions;
@@ -21,13 +20,13 @@ public class ValidationServiceTests
         [
             [new DateTime(2026, 4, 12), new DateTime(2026, 4, 13), 1, 2],
             [new DateTime(2026, 4, 1), DateTime.Now, 2, 2],
-            [null, null, 1, 10],
-            [null, new DateTime(2026, 5, 1), 5, 20],
-            [new DateTime(2026, 5, 1), null, 3, 15],
+            [null!, null!, 1, 10],
+            [null!, new DateTime(2026, 5, 1), 5, 20],
+            [new DateTime(2026, 5, 1), null!, 3, 15],
             [DateTime.Now, DateTime.Now.AddDays(1), 1, 100],
             [DateTime.Now.AddDays(-5), DateTime.Now, 10, 5],
-            [null, DateTime.Now.AddDays(30), 999, 1],
-            [DateTime.Now, null, 1, 999],
+            [null!, DateTime.Now.AddDays(30), 999, 1],
+            [DateTime.Now, null!, 1, 999],
         ];
     }
 
@@ -46,13 +45,13 @@ public class ValidationServiceTests
     {
         return
         [
-            [null, null, 0, 10],
+            [null!, null!, 0, 10],
             [DateTime.Now, DateTime.Now.AddDays(1), 0, 5],
-            [null, null, -1, 10],
-            [DateTime.Now, null, -5, 20],
-            [null, new DateTime(2026, 5, 1), -100, 15],
+            [null!, null!, -1, 10],
+            [DateTime.Now, null!, -5, 20],
+            [null!, new DateTime(2026, 5, 1), -100, 15],
             [new DateTime(2026, 4, 1), new DateTime(2026, 4, 30), -1, 10],
-            [null, null, int.MinValue, 10],
+            [null!, null!, int.MinValue, 10],
         ];
     }
 
@@ -60,13 +59,13 @@ public class ValidationServiceTests
     {
         return
         [
-            [null, null, 1, 0],
+            [null!, null!, 1, 0],
             [DateTime.Now, DateTime.Now.AddDays(1), 5, 0],
-            [null, null, 1, -1],
-            [new DateTime(2026, 4, 1), null, 3, -5],
-            [null, new DateTime(2026, 5, 1), 1, -100],
+            [null!, null!, 1, -1],
+            [new DateTime(2026, 4, 1), null!, 3, -5],
+            [null!, new DateTime(2026, 5, 1), 1, -100],
             [new DateTime(2026, 4, 1), new DateTime(2026, 4, 30), 10, -1],
-            [null, null, 1, int.MinValue],
+            [null!, null!, 1, int.MinValue],
         ];
     }
 
@@ -117,7 +116,7 @@ public class ValidationServiceTests
         // Arrange
         var eventDTO = new EventInfoDTO
         {
-            Title = null,
+            Title = null!,
             StartAt = DateTime.Now,
             EndAt = DateTime.Now.AddHours(1),
             TotalSeats = 1,
@@ -358,7 +357,7 @@ public class ValidationServiceTests
     [Theory]
     [Trait("ValidatePaginatedResult", "Success")]
     [MemberData(nameof(PaginatedResultValidTestData))]
-    public void ValidatePaginatedResult_DataValidate_ShouldReturNothing(DateTime? from, DateTime? to, int page, int pageSize)
+    public void ValidatePaginatedResult_DataValidate_ShouldReturnNothing(DateTime? from, DateTime? to, int page, int pageSize)
     {
         // Act
         var result = () => _validationService.ValidatePaginatedResult(from, to, page, pageSize);
@@ -408,7 +407,7 @@ public class ValidationServiceTests
     public void ValidateUser_CreatingUserDTO_ValidData_ShouldNotThrow()
     {
         //Arrange
-        var user = new CreatingUserDTO("validuser", "password123", Domain.Common.UserRole.User);
+        var user = new CreatingUserDTO("validuser", "password123");
 
         //Act
         var result = () => _validationService.ValidateUser(user);
@@ -422,7 +421,7 @@ public class ValidationServiceTests
     public void ValidateUser_LoginUserDTO_ValidData_ShouldNotThrow()
     {
         //Arrange
-        var user = new LogingUserDTO { Login = "validuser", Password = "password123" };
+        var user = new LoginUserDTO { Login = "validuser", Password = "password123" };
 
         //Act
         var result = () => _validationService.ValidateUser(user);
@@ -471,10 +470,10 @@ public class ValidationServiceTests
     [InlineData("a", "Логин слишком короткий")]
     [InlineData("ab", "Логин слишком короткий")]
     [InlineData("", "Логин не может быть пустым")]
-    public void ValidateUser_LogingUserDTO_ShortLogin_ShouldThrowException(string login, string message)
+    public void ValidateUser_LoginUserDTO_ShortLogin_ShouldThrowException(string login, string message)
     {
         //Arrange
-        var user = new LogingUserDTO { Login = login, Password = "password123" };
+        var user = new LoginUserDTO { Login = login, Password = "password123" };
 
         //Act
         var result = () => _validationService.ValidateUser(user);
@@ -489,10 +488,10 @@ public class ValidationServiceTests
     [InlineData("abc", "Пароль слишком короткий")]
     [InlineData("abcde", "Пароль слишком короткий")]
     [InlineData("", "Пароль не может быть пустым")]
-    public void ValidateUser_LogingUserDTO_ShortPassword_ShouldThrowException(string password, string message)
+    public void ValidateUser_LoginUserDTO_ShortPassword_ShouldThrowException(string password, string message)
     {
         //Arrange
-        var user = new LogingUserDTO { Login = "validuser", Password = password };
+        var user = new LoginUserDTO { Login = "validuser", Password = password };
 
         //Act
         var result = () => _validationService.ValidateUser(user);

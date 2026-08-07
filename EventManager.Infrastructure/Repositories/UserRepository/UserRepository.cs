@@ -45,7 +45,7 @@ public class UserRepository : IUserRepository
         await _appDbContext.SaveChangesAsync();
     }
 
-    public async Task<string> LoginUserAsync(LogingUserDTO user)
+    public async Task<string> LoginUserAsync(LoginUserDTO user)
     {
         _logger.LogInformation("Start finding user in database");
         var existUser = await _appDbContext.Users.SingleOrDefaultAsync(u => u.Login == user.Login);

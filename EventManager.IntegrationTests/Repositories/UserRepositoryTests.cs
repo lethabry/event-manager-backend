@@ -64,7 +64,7 @@ public class UserRepositoryTests : IAsyncLifetime
         var repository = CreateRepository(CreateContext(), new StubTokenGenerator(token));
 
         //Act
-        var result = await repository.LoginUserAsync(new LogingUserDTO
+        var result = await repository.LoginUserAsync(new LoginUserDTO
         {
             Login = user.Login,
             Password = password
@@ -83,7 +83,7 @@ public class UserRepositoryTests : IAsyncLifetime
 
         //Act
         var exception = await Assert.ThrowsAsync<UserValidationException>(
-            () => repository.LoginUserAsync(new LogingUserDTO
+            () => repository.LoginUserAsync(new LoginUserDTO
             {
                 Login = "missing-user",
                 Password = "password"

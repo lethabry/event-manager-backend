@@ -42,7 +42,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     [ProducesResponseType(typeof(UserTokenResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Login([FromBody] LogingUserDTO user)
+    public async Task<IActionResult> Login([FromBody] LoginUserDTO user)
     {
         var tokenResult = await _userService.LoginUserAsync(user);
         return Ok(tokenResult);

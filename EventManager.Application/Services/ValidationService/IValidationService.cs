@@ -7,5 +7,5 @@ public interface IValidationService
     public void ValidateEventDTO(EventInfoDTO eventDTO);
     public void ValidatePaginatedResult(DateTime? from, DateTime? to, int page, int pageSize);
     public void ValidateUser(CreatingUserDTO userDTO);
-    public void ValidateUser(LogingUserDTO userDTO);
+    public void ValidateUser(LoginUserDTO userDTO);
 }

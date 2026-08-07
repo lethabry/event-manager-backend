@@ -121,7 +121,7 @@ public class ValidationService : IValidationService
         }
     }
 
-    public void ValidateUser(LogingUserDTO user)
+    public void ValidateUser(LoginUserDTO user)
     {
         if (string.IsNullOrEmpty(user.Login))
         {

@@ -148,6 +148,23 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task CancelBooking_UserAdmin_CancelBookingSuccessful()
+    {
+        //Arrange
+        var eventId = Guid.NewGuid();
+        var user = new User("login", "password", UserRole.Admin);
+        var booking = new Booking(eventId, user.Id);
+        _bookingRepositoryMock.Setup(repository => repository.GetBookingByIdAsync(booking.Id)).ReturnsAsync(booking);
+
+        //Act
+        var result = () => _bookingService.CancelBookingAsync(booking.Id, user.Id, user.Role);
+
+        //Assert
+        await result.Should().NotThrowAsync<AccessDeniedException>();
+        _bookingRepositoryMock.Verify((r)=> r.GetBookingByIdAsync(booking.Id), Times.Once);
+    }
+
+    [Fact]
     public async Task GetBookingById_BookingExists_ShouldReturnDto()
     {
         //Arrange

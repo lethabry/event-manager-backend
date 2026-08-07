@@ -54,7 +54,7 @@ public class UserServiceTests
     public async Task LoginUser_ValidCredentials_ReturnsTokenResult()
     {
         //Arrange
-        var user = new LogingUserDTO { Login = "existing-user", Password = "password" };
+        var user = new LoginUserDTO { Login = "existing-user", Password = "password" };
         const string token = "jwt-token";
         _userRepositoryMock.Setup(repository => repository.LoginUserAsync(user)).ReturnsAsync(token);
 
@@ -71,7 +71,7 @@ public class UserServiceTests
     public async Task LoginUser_InvalidCredentials_PropagatesException()
     {
         //Arrange
-        var user = new LogingUserDTO { Login = "existing-user", Password = "wrong-password" };
+        var user = new LoginUserDTO { Login = "existing-user", Password = "wrong-password" };
         _userRepositoryMock
             .Setup(repository => repository.LoginUserAsync(user))
             .ThrowsAsync(new UserValidationException("Неправильные логин или пароль"));
