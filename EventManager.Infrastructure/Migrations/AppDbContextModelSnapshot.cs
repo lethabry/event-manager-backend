@@ -39,10 +39,8 @@ namespace EventManager.Infrastructure.Migrations
                         .HasColumnName("event_id");
 
                     b.Property<DateTime?>("ProcessedAt")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("processed_at")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnName("processed_at");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -50,9 +48,15 @@ namespace EventManager.Infrastructure.Migrations
                         .HasColumnType("character varying(250)")
                         .HasColumnName("status");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EventId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("bookings", (string)null);
                 });
@@ -99,6 +103,38 @@ namespace EventManager.Infrastructure.Migrations
                     b.ToTable("events", (string)null);
                 });
 
+            modelBuilder.Entity("EventManager.Domain.Models.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Login")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("login");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("role");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Login")
+                        .IsUnique();
+
+                    b.ToTable("users", (string)null);
+                });
+
             modelBuilder.Entity("EventManager.Domain.Models.Booking", b =>
                 {
                     b.HasOne("EventManager.Domain.Models.Event", "Event")
@@ -107,10 +143,23 @@ namespace EventManager.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("EventManager.Domain.Models.User", "User")
+                        .WithMany("Bookings")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Event");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("EventManager.Domain.Models.Event", b =>
+                {
+                    b.Navigation("Bookings");
+                });
+
+            modelBuilder.Entity("EventManager.Domain.Models.User", b =>
                 {
                     b.Navigation("Bookings");
                 });

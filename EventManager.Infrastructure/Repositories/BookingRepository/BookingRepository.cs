@@ -30,16 +30,9 @@ public class BookingRepository : IBookingRepository
         return await _appDbContext.Bookings.FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    public async Task<Booking> CreateBookingAsync(Guid eventId)
+    public async Task<Booking> CreateBookingAsync(Guid eventId, Guid userId)
     {
         await using var transaction = await _appDbContext.Database.BeginTransactionAsync();
-
-        var exist = await _appDbContext.Events.AnyAsync(e => e.Id == eventId);
-
-        if (!exist)
-        {
-            throw new EventNotFoundException(eventId);
-        }
 
         var affected = await _appDbContext.Events
             .Where(e => e.Id == eventId && e.AvailableSeats > 0)
@@ -50,7 +43,7 @@ public class BookingRepository : IBookingRepository
             throw new NoAvailableSeatsException(eventId);
         }
 
-        var booking = new Booking(eventId);
+        var booking = new Booking(eventId, userId);
         await _appDbContext.Bookings.AddAsync(booking);
         await _appDbContext.SaveChangesAsync();
         await transaction.CommitAsync();
@@ -80,5 +73,38 @@ public class BookingRepository : IBookingRepository
         _appDbContext.Update(updatedBooking);
         await _appDbContext.SaveChangesAsync(ct);
         return updatedBooking;
+    }
+
+    public async Task<bool> CancelBookingAsync(Guid bookingId)
+    {
+        var booking = await GetBookingByIdAsync(bookingId);
+        if (booking == null)
+        {
+            throw new BookingNotFoundException(bookingId);
+        }
+
+        var evt = await _appDbContext.Events.SingleOrDefaultAsync(e => e.Id == booking.EventId);
+        if (evt == null)
+        {
+            throw new EventNotFoundException(booking.EventId);
+        }
+
+        _logger.LogDebug("Cancelling booking {BookingId}", bookingId);
+
+        if (!booking.Cancel())
+        {
+            throw new BookingStatusConflictException(booking.Id);
+        }
+
+        evt.ReleaseSeats();
+        await _appDbContext.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<int> GetCountOfActiveBookingsAsync(Guid userId)
+    {
+        return await _appDbContext.Bookings.CountAsync((b) => b.UserId == userId
+                                                              && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending)
+                                                              && b.Event.StartAt > DateTime.UtcNow);
     }
 }

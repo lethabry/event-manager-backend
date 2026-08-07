@@ -40,7 +40,62 @@ Swagger UI доступен на `/swagger`.
 
 Строка подключения к БД читается из `ConnectionStrings:DefaultConnection`. В `appsettings.json` пароль оставлен пустым; для локальной разработки задайте полный connection string через `dotnet user-secrets set "ConnectionStrings:DefaultConnection" "..."` или переменную окружения `ConnectionStrings__DefaultConnection`.
 
+### JWT
+
+JWT использует секцию `TokenSettings`:
+
+```json
+{
+  "TokenSettings": {
+    "Secret": "",
+    "Issuer": "EventManagerApi",
+    "Audience": "EventManagerApi",
+    "LifeTimeInMinutes": 15
+  }
+}
+```
+
+Для локальной разработки задайте секрет через User Secrets:
+
+```bash
+dotnet user-secrets set "TokenSettings:Secret" "your-development-secret-at-least-32-bytes-long" --project EventManager.Presentation
+```
+
+В production используйте уникальный длинный секрет из переменной окружения `TokenSettings__Secret` или внешнего secret storage. Не храните production-секрет в репозитории и замените его, если он был опубликован.
+
+### Роли и доступ
+
+- `User` может просматривать мероприятия, создавать брони и отменять только собственные брони.
+- `Admin` может создавать, изменять и удалять мероприятия, а также отменять бронь любого пользователя.
+- `POST /auth/register` и `POST /auth/login` доступны без JWT.
+- `POST /events/{id}/book`, `GET /bookings/{id}` и `DELETE /bookings/{id}` требуют JWT.
+- `POST /events`, `PUT /events/{id}` и `DELETE /events/{id}` требуют роль `Admin`.
+
+### Получение JWT через Swagger
+
+1. Запустите приложение в окружении `Development` и откройте `/swagger`.
+2. Вызовите `POST /auth/register` с логином, паролем и ролью `User` или `Admin`.
+3. Вызовите `POST /auth/login` с теми же учетными данными и скопируйте значение `token` из ответа.
+4. Нажмите `Authorize` в Swagger и вставьте только JWT, без префикса `Bearer`.
+5. Swagger автоматически добавит заголовок `Authorization: Bearer <token>` к защищенным запросам.
+
 ## API Endpoints
+
+### Аутентификация
+
+**Базовый путь**: `/auth`
+
+- `POST /auth/register` — регистрация пользователя
+  - Доступ: без токена
+  - Тело: `CreatingUserBodyDTO` с полями `Login`, `Password`, `Role` (`"User"` по умолчанию, можно передать `"Admin"`)
+  - Ответ: `204 No Content`
+  - Ошибки: `400 Bad Request` при невалидных данных, `409 Conflict` при занятом логине
+
+- `POST /auth/login` — авторизация пользователя
+  - Доступ: без токена
+  - Тело: `LogingUserDTO` с полями `Login`, `Password`
+  - Ответ: `200 OK` с `UserTokenResult` (`{ "token": "..." }`)
+  - Ошибка: `400 Bad Request` при неверных учётных данных
 
 ### Мероприятия
 
@@ -77,6 +132,10 @@ Swagger UI доступен на `/swagger`.
 - `GET /bookings/{id}` — получить бронирование по ID
   - Ответ: `200 OK` с `BookingDTO` или `404 Not Found`
 
+- `DELETE /bookings/{id}` — отменить бронирование
+  - Ответ: `204 No Content`
+  - Ошибки: `403 Forbidden` для чужой брони, `404 Not Found`, `409 Conflict` для завершенной отмены или отклоненной брони
+
 ## Модели данных
 
 **Модель Event:**
@@ -95,6 +154,7 @@ Swagger UI доступен на `/swagger`.
 | `Pending` | Ожидает подтверждения |
 | `Confirmed` | Подтверждено |
 | `Rejected` | Отклонено |
+| `Cancelled` | Отменено пользователем или администратором |
 
 ## Архитектура (Clean Architecture)
 
@@ -221,7 +281,7 @@ Swagger UI доступен на `/swagger`.
 
 Для предотвращения условий гонки при одновременных бронированиях используются:
 
-- **`lock`** — в `BookingService` для атомарного уменьшения `AvailableSeats`
+- **Атомарное обновление в БД** — условное уменьшение `AvailableSeats` выполняется в репозитории одним SQL-оператором
 - **`SemaphoreSlim`** — в `BookingConfirmationService` для последовательной обработки подтверждений
 
 Это гарантирует консистентность данных при параллельных запросах.

@@ -39,7 +39,7 @@ public class BookingRepositoryTests : IAsyncLifetime
     {
         await using var context = CreateContext();
         await context.Database.ExecuteSqlRawAsync(
-            "TRUNCATE TABLE bookings, events RESTART IDENTITY CASCADE");
+            "TRUNCATE TABLE bookings, events, users RESTART IDENTITY CASCADE");
     }
 
     [Fact]
@@ -49,14 +49,16 @@ public class BookingRepositoryTests : IAsyncLifetime
         var now = DateTime.UtcNow;
         await ResetDatabaseAsync();
         await using var context = CreateContext();
-        var evt1 = Event.Create("Test Event", now, now.AddDays(1), 5);
+        var evt1 = Event.Create("Test Event", now.AddDays(1), now.AddDays(2), 5);
+        var user = CreateUser();
         await context.Events.AddAsync(evt1);
+        await context.Users.AddAsync(user);
         await context.SaveChangesAsync();
 
         //Act
         await using var repositoryContext = CreateContext();
         var repository = new BookingRepository(repositoryContext);
-        var booking = await repository.CreateBookingAsync(evt1.Id);
+        var booking = await repository.CreateBookingAsync(evt1.Id, user.Id);
         await using var verificationContext = CreateContext();
         var savedEvent = await verificationContext.Events.SingleAsync(e => e.Id == evt1.Id);
         var savedBookings = await verificationContext.Bookings.Where(b => b.EventId == evt1.Id).ToListAsync();
@@ -70,17 +72,18 @@ public class BookingRepositoryTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task CreateBooking_NotExistingEvent_ThrowException()
+    public async Task CreateBooking_NotExistingEvent_ThrowsNoAvailableSeatsException()
     {
         //Arrange
         await ResetDatabaseAsync();
         await using var context = CreateContext();
         var repository = new BookingRepository(context);
         var eventId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
 
         //Act && Assert
-        var exception = await Assert.ThrowsAsync<EventNotFoundException>(
-            () => repository.CreateBookingAsync(eventId));
+        var exception = await Assert.ThrowsAsync<NoAvailableSeatsException>( 
+            () => repository.CreateBookingAsync(eventId, userId));
         Assert.Equal(eventId, exception.EventId);
     }
 
@@ -95,12 +98,16 @@ public class BookingRepositoryTests : IAsyncLifetime
         await ResetDatabaseAsync();
         var now = DateTime.UtcNow;
         Guid eventId;
+        Guid userId;
 
         await using (var seedContext = CreateContext())
         {
-            var evt = Event.Create("Concurrent Event", now, now.AddDays(1), totalSeats);
+            var evt = Event.Create("Concurrent Event", now.AddDays(1), now.AddDays(2), totalSeats);
+            var user = CreateUser();
             eventId = evt.Id;
+            userId = user.Id;
             await seedContext.Events.AddAsync(evt);
+            await seedContext.Users.AddAsync(user);
             await seedContext.SaveChangesAsync();
         }
 
@@ -117,7 +124,7 @@ public class BookingRepositoryTests : IAsyncLifetime
 
                 try
                 {
-                    var booking = await repository.CreateBookingAsync(eventId);
+                    var booking = await repository.CreateBookingAsync(eventId, userId);
                     return new BookingAttempt(booking, null);
                 }
                 catch (NoAvailableSeatsException exception)
@@ -169,9 +176,11 @@ public class BookingRepositoryTests : IAsyncLifetime
         await using var context = CreateContext();
         var evt1 = Event.Create("Test Event", now, now.AddDays(1), 5);
         var evt2 = Event.Create("New Event", now, now.AddDays(1), 5);
+        var user = CreateUser();
         await context.Events.AddRangeAsync([evt1, evt2]);
-        await context.Bookings.AddAsync(new Booking(evt1.Id));
-        await context.Bookings.AddAsync(new Booking(evt2.Id));
+        await context.Users.AddAsync(user);
+        await context.Bookings.AddAsync(new Booking(evt1.Id, user.Id));
+        await context.Bookings.AddAsync(new Booking(evt2.Id, user.Id));
         await context.SaveChangesAsync();
 
         //Act
@@ -212,11 +221,13 @@ public class BookingRepositoryTests : IAsyncLifetime
         await using var context = CreateContext();
         var evt1 = Event.Create("Test Event", now, now.AddDays(1), 5);
         var evt2 = Event.Create("New Event", now, now.AddDays(1), 5);
+        var user = CreateUser();
         await context.Events.AddRangeAsync([evt1, evt2]);
+        await context.Users.AddAsync(user);
 
-        var booking1 = new Booking(evt1.Id);
+        var booking1 = new Booking(evt1.Id, user.Id);
         booking1.Confirm();
-        var booking2 = new Booking(evt2.Id);
+        var booking2 = new Booking(evt2.Id, user.Id);
         await context.Bookings.AddRangeAsync([booking1, booking2]);
         await context.SaveChangesAsync();
 
@@ -240,9 +251,11 @@ public class BookingRepositoryTests : IAsyncLifetime
         var now = DateTime.UtcNow;
         await using var context = CreateContext();
         var evt1 = Event.Create("Test Event", now, now.AddDays(1), 5);
+        var user = CreateUser();
         await context.Events.AddRangeAsync(evt1);
 
-        var booking1 = new Booking(evt1.Id);
+        await context.Users.AddAsync(user);
+        var booking1 = new Booking(evt1.Id, user.Id);
         await context.Bookings.AddAsync(booking1);
         await context.SaveChangesAsync();
 
@@ -275,9 +288,11 @@ public class BookingRepositoryTests : IAsyncLifetime
         var now = DateTime.UtcNow;
         await using var context = CreateContext();
         var evt1 = Event.Create("Test Event", now, now.AddDays(1), 5);
+        var user = CreateUser();
         await context.Events.AddRangeAsync(evt1);
 
-        var booking1 = new Booking(evt1.Id);
+        await context.Users.AddAsync(user);
+        var booking1 = new Booking(evt1.Id, user.Id);
         await context.Bookings.AddAsync(booking1);
         await context.SaveChangesAsync();
 
@@ -297,9 +312,40 @@ public class BookingRepositoryTests : IAsyncLifetime
     public async Task UpdateBooking_BookingNotExist_ReturnBooking()
     {
         //Act && Arrange
-        var booking = new Booking(Guid.NewGuid());
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid());
         var repository = new BookingRepository(CreateContext());
         await Assert.ThrowsAsync<BookingNotFoundException>(() => repository.UpdateBookingAsync(booking));
+    }
+
+    [Fact]
+    public async Task CreateBooking_ActiveBookingLimitOfAnotherUser_DoesNotBlockBooking()
+    {
+        //Arrange
+        await ResetDatabaseAsync();
+        var now = DateTime.UtcNow;
+        var evt = Event.Create("Shared Event", now.AddDays(1), now.AddDays(2), AppConstants.MaxActiveBookings + 1);
+        var firstUser = CreateUser();
+        var secondUser = CreateUser();
+        await using var context = CreateContext();
+        await context.Events.AddAsync(evt);
+        await context.Users.AddRangeAsync([firstUser, secondUser]);
+        await context.SaveChangesAsync();
+        var repository = new BookingRepository(CreateContext());
+
+        //Act
+        for (var i = 0; i < AppConstants.MaxActiveBookings; i++)
+        {
+            await repository.CreateBookingAsync(evt.Id, firstUser.Id);
+        }
+        var booking = await repository.CreateBookingAsync(evt.Id, secondUser.Id);
+
+        //Assert
+        Assert.Equal(secondUser.Id, booking.UserId);
+    }
+
+    private static User CreateUser()
+    {
+        return new User($"user-{Guid.NewGuid()}", "hash", UserRole.User);
     }
 
     private sealed record BookingAttempt(

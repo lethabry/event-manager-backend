@@ -12,10 +12,12 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
 
         builder.Property(e => e.Id).ValueGeneratedNever().IsRequired().HasColumnName("id");
         builder.Property(e => e.EventId).IsRequired().HasColumnName("event_id");
+        builder.Property(e => e.UserId).IsRequired().HasColumnName("user_id");
         builder.Property(e => e.Status).HasConversion<string>().HasMaxLength(250).HasColumnName("status");
         builder.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
-        builder.Property(e => e.ProcessedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("processed_at");
+        builder.Property(e => e.ProcessedAt).HasColumnName("processed_at");
 
         builder.HasOne(d => d.Event).WithMany(p => p.Bookings).HasForeignKey(d => d.EventId);
+        builder.HasOne(d => d.User).WithMany(p => p.Bookings).HasForeignKey(d => d.UserId);
     }
 }

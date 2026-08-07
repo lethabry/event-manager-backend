@@ -11,10 +11,13 @@ public class Booking
     public DateTime CreatedAt { get; init; }
     public DateTime? ProcessedAt { get; private set; }
     public Event Event { get; set; }
+    public Guid UserId { get; init; }
+    public User User { get; set; }
 
-    public Booking(Guid eventId)
+    public Booking(Guid eventId, Guid userId)
     {
         Id = Guid.NewGuid();
+        UserId = userId;
         EventId = eventId;
         Status = BookingStatus.Pending;
         CreatedAt = DateTime.UtcNow;
@@ -44,6 +47,18 @@ public class Booking
         }
 
         Status = BookingStatus.Rejected;
+        ProcessedAt = DateTime.UtcNow;
+        return true;
+    }
+
+    public bool Cancel()
+    {
+        if (Status is not BookingStatus.Pending and not BookingStatus.Confirmed)
+        {
+            return false;
+        }
+
+        Status = BookingStatus.Cancelled;
         ProcessedAt = DateTime.UtcNow;
         return true;
     }
