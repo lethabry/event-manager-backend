@@ -34,31 +34,6 @@ public class BookingRepository : IBookingRepository
     {
         await using var transaction = await _appDbContext.Database.BeginTransactionAsync();
 
-        var existedEvent = await _appDbContext.Events.SingleOrDefaultAsync(e => e.Id == eventId);
-
-        if (existedEvent is null)
-        {
-            throw new EventNotFoundException(eventId);
-        }
-
-        if (existedEvent.StartAt <= DateTime.UtcNow)
-        {
-            throw new BookingPastEventException(existedEvent.Id);
-        }
-
-        var userExists = await _appDbContext.Users.AnyAsync(user => user.Id == userId);
-        if (!userExists)
-        {
-            throw new UserNotFoundException($"Пользователь с id {userId} не найден");
-        }
-
-        var activeBookings = await GetCountOfActiveBookingsAsync(userId);
-
-        if (activeBookings >= AppConstants.MaxActiveBookings)
-        {
-            throw new ActiveBookingLimitException(userId);
-        }
-
         var affected = await _appDbContext.Events
             .Where(e => e.Id == eventId && e.AvailableSeats > 0)
             .ExecuteUpdateAsync(update => update.SetProperty(e => e.AvailableSeats, e => e.AvailableSeats - 1));
@@ -100,7 +75,7 @@ public class BookingRepository : IBookingRepository
         return updatedBooking;
     }
 
-    public async Task<bool> CancelBookingAsync(Guid bookingId, Guid userId, UserRole role)
+    public async Task<bool> CancelBookingAsync(Guid bookingId)
     {
         var booking = await GetBookingByIdAsync(bookingId);
         if (booking == null)
@@ -112,11 +87,6 @@ public class BookingRepository : IBookingRepository
         if (evt == null)
         {
             throw new EventNotFoundException(booking.EventId);
-        }
-
-        if (role == UserRole.User && booking.UserId != userId)
-        {
-            throw new AccessDeniedException("Отменять можно только собственные бронирования");
         }
 
         _logger.LogDebug("Cancelling booking {BookingId}", bookingId);

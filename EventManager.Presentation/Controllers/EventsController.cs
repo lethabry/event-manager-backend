@@ -82,8 +82,8 @@ public class EventsController : ControllerBase
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType( StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType( StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [Produces("application/json")]
     [HttpPut("{id}")]
@@ -99,8 +99,8 @@ public class EventsController : ControllerBase
     /// <param name="id">Id мероприятия</param>
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType( StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType( StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)

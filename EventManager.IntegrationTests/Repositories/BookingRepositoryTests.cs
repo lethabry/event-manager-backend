@@ -72,7 +72,7 @@ public class BookingRepositoryTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task CreateBooking_NotExistingEvent_ThrowException()
+    public async Task CreateBooking_NotExistingEvent_ThrowsNoAvailableSeatsException()
     {
         //Arrange
         await ResetDatabaseAsync();
@@ -82,7 +82,7 @@ public class BookingRepositoryTests : IAsyncLifetime
         var userId = Guid.NewGuid();
 
         //Act && Assert
-        var exception = await Assert.ThrowsAsync<EventNotFoundException>(
+        var exception = await Assert.ThrowsAsync<NoAvailableSeatsException>( 
             () => repository.CreateBookingAsync(eventId, userId));
         Assert.Equal(eventId, exception.EventId);
     }
@@ -315,53 +315,6 @@ public class BookingRepositoryTests : IAsyncLifetime
         var booking = new Booking(Guid.NewGuid(), Guid.NewGuid());
         var repository = new BookingRepository(CreateContext());
         await Assert.ThrowsAsync<BookingNotFoundException>(() => repository.UpdateBookingAsync(booking));
-    }
-
-    [Fact]
-    public async Task CreateBooking_PastEvent_ThrowsException()
-    {
-        //Arrange
-        await ResetDatabaseAsync();
-        var now = DateTime.UtcNow;
-        var evt = Event.Create("Past Event", now.AddDays(-2), now.AddDays(-1), 1);
-        var user = CreateUser();
-        await using var context = CreateContext();
-        await context.Events.AddAsync(evt);
-        await context.Users.AddAsync(user);
-        await context.SaveChangesAsync();
-
-        //Act
-        var repository = new BookingRepository(CreateContext());
-
-        //Assert
-        await Assert.ThrowsAsync<BookingPastEventException>(
-            () => repository.CreateBookingAsync(evt.Id, user.Id));
-    }
-
-    [Fact]
-    public async Task CreateBooking_ActiveBookingLimitReached_ThrowsException()
-    {
-        //Arrange
-        await ResetDatabaseAsync();
-        var now = DateTime.UtcNow;
-        var evt = Event.Create("Popular Event", now.AddDays(1), now.AddDays(2), AppConstants.MaxActiveBookings + 1);
-        var user = CreateUser();
-        await using var context = CreateContext();
-        await context.Events.AddAsync(evt);
-        await context.Users.AddAsync(user);
-        await context.SaveChangesAsync();
-        var repository = new BookingRepository(CreateContext());
-
-        //Act
-        for (var i = 0; i < AppConstants.MaxActiveBookings; i++)
-        {
-            await repository.CreateBookingAsync(evt.Id, user.Id);
-        }
-
-        //Assert
-        var exception = await Assert.ThrowsAsync<ActiveBookingLimitException>(
-            () => repository.CreateBookingAsync(evt.Id, user.Id));
-        Assert.Equal(user.Id, exception.UserId);
     }
 
     [Fact]

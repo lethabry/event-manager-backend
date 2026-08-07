@@ -130,8 +130,7 @@ public class ValidationServiceTests
         // Assert
         result.Should()
             .Throw<EventValidationException>()
-            .WithMessage("Название мероприятия не может быть пустым")
-            ;
+            .WithMessage("Название мероприятия не может быть пустым");
     }
 
     [Fact]
@@ -153,8 +152,7 @@ public class ValidationServiceTests
         // Assert
         result.Should()
             .Throw<EventValidationException>()
-            .WithMessage("Название мероприятия не может быть пустым")
-            ;
+            .WithMessage("Название мероприятия не может быть пустым");
     }
 
     [Fact]
@@ -176,8 +174,7 @@ public class ValidationServiceTests
         // Assert
         result.Should()
             .Throw<EventValidationException>()
-            .WithMessage("Название мероприятия не может быть пустым")
-            ;
+            .WithMessage("Название мероприятия не может быть пустым");
     }
 
     [Fact]
@@ -199,8 +196,7 @@ public class ValidationServiceTests
         // Assert
         result.Should()
             .Throw<EventValidationException>()
-            .WithMessage("Дата начала мероприятия должна быть заполнена")
-            ;
+            .WithMessage("Дата начала мероприятия должна быть заполнена");
     }
 
     [Fact]
@@ -222,8 +218,7 @@ public class ValidationServiceTests
         // Assert
         result.Should()
             .Throw<EventValidationException>()
-            .WithMessage("Дата конца мероприятия должна быть заполнена")
-            ;
+            .WithMessage("Дата конца мероприятия должна быть заполнена");
     }
 
     [Fact]
@@ -246,8 +241,7 @@ public class ValidationServiceTests
         // Assert
         result.Should()
             .Throw<EventValidationException>()
-            .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
-            ;
+            .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия");
     }
 
     [Fact]
@@ -269,8 +263,7 @@ public class ValidationServiceTests
         // Assert
         result.Should()
             .Throw<EventValidationException>()
-            .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия")
-            ;
+            .WithMessage("Дата и время начала мероприятия должна быть раньше, чем дата и время окончания мероприятия");
     }
 
     [Fact]
@@ -292,8 +285,7 @@ public class ValidationServiceTests
         // Assert
         result.Should()
             .Throw<EventValidationException>()
-            .WithMessage("Количество мест должно быть больше 0")
-            ;
+            .WithMessage("Количество мест должно быть больше 0");
     }
 
 
@@ -338,8 +330,7 @@ public class ValidationServiceTests
         // Assert
         result.Should()
             .Throw<EventValidationException>()
-            .WithMessage("Количество доступных мест должно быть не меньше 0")
-            ;
+            .WithMessage("Количество доступных мест должно быть не меньше 0");
     }
 
     [Fact]
@@ -361,8 +352,7 @@ public class ValidationServiceTests
         // Assert
         result.Should()
             .Throw<EventValidationException>()
-            .WithMessage("Количество доступных мест не может быть больше мест всего")
-            ;
+            .WithMessage("Количество доступных мест не может быть больше мест всего");
     }
 
     [Theory]
@@ -443,10 +433,10 @@ public class ValidationServiceTests
 
     [Theory]
     [Trait("ValidateUser", "ThrowException")]
-    [InlineData("a")]
-    [InlineData("ab")]
-    [InlineData("")]
-    public void ValidateUser_CreatingUserDTO_ShortLogin_ShouldThrowException(string login)
+    [InlineData("a", "Логин слишком короткий")]
+    [InlineData("ab", "Логин слишком короткий")]
+    [InlineData("", "Логин не может быть пустым")]
+    public void ValidateUser_CreatingUserDTO_ShortLogin_ShouldThrowException(string login, string message)
     {
         //Arrange
         var user = new CreatingUserDTO(login, "password123");
@@ -455,16 +445,16 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidateUser(user);
 
         //Assert
-        result.Should().Throw<UserValidationException>().WithMessage("Логин слишком короткий");
+        result.Should().Throw<UserValidationException>().WithMessage(message);
     }
 
     [Theory]
     [Trait("ValidateUser", "ThrowException")]
-    [InlineData("a")]
-    [InlineData("abc")]
-    [InlineData("abcde")]
-    [InlineData("")]
-    public void ValidateUser_CreatingUserDTO_ShortPassword_ShouldThrowException(string password)
+    [InlineData("a", "Пароль слишком короткий")]
+    [InlineData("abc", "Пароль слишком короткий")]
+    [InlineData("abcde", "Пароль слишком короткий")]
+    [InlineData("", "Пароль не может быть пустым")]
+    public void ValidateUser_CreatingUserDTO_ShortPassword_ShouldThrowException(string password, string message)
     {
         //Arrange
         var user = new CreatingUserDTO("validuser", password);
@@ -473,15 +463,15 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidateUser(user);
 
         //Assert
-        result.Should().Throw<UserValidationException>().WithMessage("Пароль слишком короткий");
+        result.Should().Throw<UserValidationException>().WithMessage(message);
     }
 
     [Theory]
     [Trait("ValidateUser", "ThrowException")]
-    [InlineData("a")]
-    [InlineData("ab")]
-    [InlineData("")]
-    public void ValidateUser_LogingUserDTO_ShortLogin_ShouldThrowException(string login)
+    [InlineData("a", "Логин слишком короткий")]
+    [InlineData("ab", "Логин слишком короткий")]
+    [InlineData("", "Логин не может быть пустым")]
+    public void ValidateUser_LogingUserDTO_ShortLogin_ShouldThrowException(string login, string message)
     {
         //Arrange
         var user = new LogingUserDTO { Login = login, Password = "password123" };
@@ -490,16 +480,16 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidateUser(user);
 
         //Assert
-        result.Should().Throw<UserValidationException>().WithMessage("Логин слишком короткий");
+        result.Should().Throw<UserValidationException>().WithMessage(message);
     }
 
     [Theory]
     [Trait("ValidateUser", "ThrowException")]
-    [InlineData("a")]
-    [InlineData("abc")]
-    [InlineData("abcde")]
-    [InlineData("")]
-    public void ValidateUser_LogingUserDTO_ShortPassword_ShouldThrowException(string password)
+    [InlineData("a", "Пароль слишком короткий")]
+    [InlineData("abc", "Пароль слишком короткий")]
+    [InlineData("abcde", "Пароль слишком короткий")]
+    [InlineData("", "Пароль не может быть пустым")]
+    public void ValidateUser_LogingUserDTO_ShortPassword_ShouldThrowException(string password, string message)
     {
         //Arrange
         var user = new LogingUserDTO { Login = "validuser", Password = password };
@@ -508,6 +498,6 @@ public class ValidationServiceTests
         var result = () => _validationService.ValidateUser(user);
 
         //Assert
-        result.Should().Throw<UserValidationException>().WithMessage("Пароль слишком короткий");
+        result.Should().Throw<UserValidationException>().WithMessage(message);
     }
 }

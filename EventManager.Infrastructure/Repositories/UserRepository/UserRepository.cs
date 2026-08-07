@@ -69,4 +69,10 @@ public class UserRepository : IUserRepository
         var token = _tokenGenerator.GenerateToken(userTokenInfo);
         return token;
     }
+
+    public async Task<bool> CheckIfUserExistAsync(Guid userId)
+    {
+        var userExists = await _appDbContext.Users.AnyAsync(user => user.Id == userId);
+        return userExists;
+    }
 }

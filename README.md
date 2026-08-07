@@ -281,7 +281,7 @@ dotnet user-secrets set "TokenSettings:Secret" "your-development-secret-at-least
 
 Для предотвращения условий гонки при одновременных бронированиях используются:
 
-- **`lock`** — в `BookingService` для атомарного уменьшения `AvailableSeats`
+- **Атомарное обновление в БД** — условное уменьшение `AvailableSeats` выполняется в репозитории одним SQL-оператором
 - **`SemaphoreSlim`** — в `BookingConfirmationService` для последовательной обработки подтверждений
 
 Это гарантирует консистентность данных при параллельных запросах.

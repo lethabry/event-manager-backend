@@ -14,11 +14,11 @@ public class BookingPastEventException : BookingException
     {
         EventId = eventId;
     }
-    
+
     public BookingPastEventException(Guid eventId, string message, Exception inner)
         : base(message, inner)
     {
         EventId = eventId;
     }
-    
+
 }
