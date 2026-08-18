@@ -5,7 +5,7 @@
 
 services:
   users-db:
-    image: postgres:16
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: event_manager_users
       POSTGRES_USER: postgres
@@ -21,7 +21,7 @@ services:
       retries: 10
 
   events-db:
-    image: postgres:16
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: event_manager_events
       POSTGRES_USER: postgres
@@ -37,7 +37,7 @@ services:
       retries: 10
 
   bookings-db:
-    image: postgres:16
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: event_manager_bookings
       POSTGRES_USER: postgres
