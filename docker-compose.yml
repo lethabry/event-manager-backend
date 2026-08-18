@@ -4,23 +4,55 @@
 # Данные сохраняются в именованном томе eventapi_pgdata
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: eventapi-postgres
-    restart: unless-stopped
+  users-db:
+    image: postgres:16
     environment:
+      POSTGRES_DB: event_manager_users
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: eventapi
+    volumes:
+      - users-db-data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
-    volumes:
-      - eventapi_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d eventapi"]
+      test: ["CMD-SHELL", "pg_isready -U users_service -d event_manager_users"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+
+  events-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: event_manager_events
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - events-db-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d event_manager_events"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  bookings-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: event_manager_bookings
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - bookings-db-data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d event_manager_bookings"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
-  eventapi_pgdata:
+  users-db-data:
+  events-db-data:
+  bookings-db-data:
