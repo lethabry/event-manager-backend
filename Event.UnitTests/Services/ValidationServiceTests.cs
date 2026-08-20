@@ -1,7 +1,6 @@
 using Event.Application.DTOs;
 using Event.Application.Services.EventValidatorService;
 using Event.Domain.Exceptions;
-using EventManager.Contracts.DTOs;
 using FluentAssertions;
 
 namespace Event.UnitTests.Services;

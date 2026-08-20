@@ -5,7 +5,7 @@ using Auth.Infrastructure.DataAccess;
 using Auth.Infrastructure.Repositories.UserRepository;
 using Auth.Infrastructure.Services;
 using Auth.Domain.Exceptions;
-using EventManager.Contracts.Common;
+using EventManager.Common.Enums;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 

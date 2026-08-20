@@ -4,7 +4,7 @@ using Booking.Application.Services.EventClientService;
 using Booking.Application.Services.UserClientService;
 using Booking.Domain.Common;
 using Booking.Domain.Exceptions;
-using EventManager.Contracts.Common;
+using EventManager.Common.Enums;
 namespace Booking.Application.Services.BookingService;
 
 public class BookingService : IBookingService

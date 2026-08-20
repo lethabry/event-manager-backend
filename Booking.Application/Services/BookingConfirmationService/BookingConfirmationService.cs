@@ -2,7 +2,7 @@ using Booking.Application.Interfaces;
 using Booking.Application.Services.EventClientService;
 using Booking.Domain.Common;
 using Booking.Domain.Exceptions;
-using EventManager.Contracts.DTOs;
+using EventManager.Common.DTOs;
 using BookingEntity = Booking.Domain.Models.Booking;
 
 namespace Booking.Application.Services.BookingConfirmationService;

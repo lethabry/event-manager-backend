@@ -1,7 +1,7 @@
 using Auth.Application.DTOs;
 using Auth.Application.Interfaces;
 using Auth.Application.Services.UserValidator;
-using EventManager.Contracts.DTOs;
+using EventManager.Common.DTOs;
 namespace Auth.Application.Services.UserService;
 
 public class UserService : IUserService

@@ -1,7 +1,7 @@
 using Auth.Application.DTOs;
 using Auth.Application.Services.UserService;
-using EventManager.Contracts.DTOs;
-using EventManager.Contracts.Common;
+using EventManager.Common.DTOs;
+using EventManager.Common.Enums;
 using Microsoft.AspNetCore.Mvc;
 namespace Auth.Presentation.Controllers;
 

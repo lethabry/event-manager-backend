@@ -1,4 +1,4 @@
-using EventManager.Contracts.DTOs;
+using EventManager.Common.DTOs;
 namespace Booking.Application.Services.EventClientService;
 
 public interface IEventClientService

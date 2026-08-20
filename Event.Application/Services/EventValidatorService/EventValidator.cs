@@ -1,6 +1,5 @@
 using Event.Application.DTOs;
 using Event.Domain.Exceptions;
-using EventManager.Contracts.DTOs;
 namespace Event.Application.Services.EventValidatorService;
 
 public class EventValidatorService : IEventValidatorService

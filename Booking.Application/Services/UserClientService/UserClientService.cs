@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using EventManager.Contracts.DTOs;
+using EventManager.Common.DTOs;
 using Polly;
 namespace Booking.Application.Services.UserClientService;
 

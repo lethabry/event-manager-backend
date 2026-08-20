@@ -3,7 +3,7 @@ using Booking.Domain.Exceptions;
 using BookingEntity = Booking.Domain.Models.Booking;
 using Booking.Infrastructure.DataAccess;
 using Booking.Infrastructure.Repositories.BookingRepository;
-using EventManager.Contracts.Common;
+using EventManager.Common.Enums;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 

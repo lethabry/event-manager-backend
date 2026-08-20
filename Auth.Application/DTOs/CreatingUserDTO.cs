@@ -1,4 +1,4 @@
-using EventManager.Contracts.Common;
+using EventManager.Common.Enums;
 namespace Auth.Application.DTOs;
 
 public sealed record CreatingUserDTO(

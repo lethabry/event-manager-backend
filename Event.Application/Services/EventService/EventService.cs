@@ -3,7 +3,6 @@ using Event.Application.Interfaces;
 using Event.Application.Services.EventValidatorService;
 using Event.Domain.Exceptions;
 using Event.Domain.Models;
-using EventManager.Contracts.DTOs;
 using EventEntity = Event.Domain.Models.Event;
 
 namespace Event.Application.Services.EventService;

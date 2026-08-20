@@ -1,4 +1,4 @@
-namespace EventManager.Contracts.DTOs;
+namespace EventManager.Common.DTOs;
 
 public record EventResponseDTO
 {

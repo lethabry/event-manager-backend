@@ -1,3 +1,3 @@
-namespace EventManager.Contracts.DTOs;
+namespace EventManager.Common.DTOs;
 
 public sealed record UserExistingStatus (bool IsUserExist);

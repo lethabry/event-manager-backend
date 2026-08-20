@@ -1,4 +1,4 @@
-namespace EventManager.Contracts.Common;
+namespace EventManager.Common.Enums;
 
 public enum UserRole
 {

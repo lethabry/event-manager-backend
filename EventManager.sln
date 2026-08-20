@@ -59,6 +59,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Booking.IntegrationTests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventManager.Contracts", "EventManager.Contracts\EventManager.Contracts.csproj", "{49B11902-07FB-4336-B935-970DCD4BCA96}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventManager.Common", "EventManager.Common\EventManager.Common.csproj", "{D0140B7F-7883-47AE-A3FD-E6E2165E401F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -369,6 +371,18 @@ Global
 		{49B11902-07FB-4336-B935-970DCD4BCA96}.Release|x64.Build.0 = Release|Any CPU
 		{49B11902-07FB-4336-B935-970DCD4BCA96}.Release|x86.ActiveCfg = Release|Any CPU
 		{49B11902-07FB-4336-B935-970DCD4BCA96}.Release|x86.Build.0 = Release|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Debug|x64.Build.0 = Debug|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Debug|x86.Build.0 = Debug|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Release|x64.ActiveCfg = Release|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Release|x64.Build.0 = Release|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Release|x86.ActiveCfg = Release|Any CPU
+		{D0140B7F-7883-47AE-A3FD-E6E2165E401F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,5 +1,4 @@
 using Event.Application.DTOs;
-using EventManager.Contracts.DTOs;
 namespace Event.Application.Services.EventValidatorService;
 
 public interface IEventValidatorService

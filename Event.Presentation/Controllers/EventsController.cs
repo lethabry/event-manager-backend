@@ -1,7 +1,7 @@
 using Event.Application.DTOs;
 using Event.Application.Services.EventService;
 using Event.Domain.Models;
-using EventManager.Contracts.DTOs;
+using EventManager.Common.DTOs;
 using EventEntity = Event.Domain.Models.Event;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

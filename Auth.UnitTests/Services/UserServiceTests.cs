@@ -3,7 +3,7 @@ using Auth.Application.Interfaces;
 using Auth.Application.Services.UserService;
 using Auth.Application.Services.UserValidator;
 using Auth.Domain.Exceptions;
-using EventManager.Contracts.Common;
+using EventManager.Common.Enums;
 using Moq;
 
 namespace Auth.UnitTests.Services;

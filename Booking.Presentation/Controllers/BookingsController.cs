@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Booking.Application.DTOs;
 using Booking.Application.Services.BookingService;
 using Booking.Domain.Exceptions;
-using EventManager.Contracts.Common;
+using EventManager.Common.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

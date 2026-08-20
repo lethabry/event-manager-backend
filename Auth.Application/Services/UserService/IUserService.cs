@@ -1,5 +1,5 @@
 using Auth.Application.DTOs;
-using EventManager.Contracts.DTOs;
+using EventManager.Common.DTOs;
 namespace Auth.Application.Services.UserService;
 
 public interface IUserService

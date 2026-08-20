@@ -7,7 +7,6 @@ using Event.Domain.Models;
 using EventEntity = Event.Domain.Models.Event;
 using Event.Infrastructure.DataAccess;
 using Event.Infrastructure.Repositories.EventRepository;
-using EventManager.Contracts.DTOs;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

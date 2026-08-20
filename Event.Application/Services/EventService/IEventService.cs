@@ -1,7 +1,6 @@
 using Event.Application.DTOs;
 using EventEntity = Event.Domain.Models.Event;
 using Event.Domain.Models;
-using EventManager.Contracts.DTOs;
 
 namespace Event.Application.Services.EventService;
 

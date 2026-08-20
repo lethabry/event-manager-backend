@@ -1,5 +1,5 @@
 using Booking.Application.DTOs;
-using EventManager.Contracts.Common;
+using EventManager.Common.Enums;
 namespace Booking.Application.Services.BookingService;
 
 public interface IBookingService
