@@ -2,8 +2,8 @@ using Auth.Application.DTOs;
 using Auth.Application.Interfaces;
 using Auth.Application.Services.UserService;
 using Auth.Application.Services.UserValidator;
-using Auth.Domain.Common;
 using Auth.Domain.Exceptions;
+using EventManager.Contracts.Common;
 using Moq;
 
 namespace Auth.UnitTests.Services;

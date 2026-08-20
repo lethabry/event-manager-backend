@@ -20,6 +20,35 @@ public class BookingsController : ControllerBase
     {
         _bookingService = bookingService;
     }
+    
+    /// <summary>
+    /// Метод для бронирования мероприятия
+    /// </summary>
+    /// <param name="eventId">Id мероприятия</param>
+    [ProducesResponseType(typeof(BookingDTO), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [HttpPost("{eventId}/book")]
+    public async Task<IActionResult> Book(Guid eventId)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (userIdClaim == null)
+        {
+            return NotFound("Идентификатор пользователя не найден");
+        }
+
+        var userId = Guid.Parse(userIdClaim.Value);
+        var booking = await _bookingService.CreateBookingAsync(eventId, userId);
+        return AcceptedAtAction(
+            actionName: nameof(BookingsController.GetById),
+            controllerName: "Bookings",
+            routeValues: new { id = booking?.Id },
+            value: booking
+        );
+    }
 
     /// <summary>
     /// Метод для получения бронирования

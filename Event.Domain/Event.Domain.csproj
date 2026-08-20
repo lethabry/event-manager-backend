@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Common\" />
+      <ProjectReference Include="..\EventManager.Contracts\EventManager.Contracts.csproj" />
     </ItemGroup>
 
 </Project>

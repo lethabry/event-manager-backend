@@ -1,4 +1,4 @@
-using Auth.Domain.Common;
+using EventManager.Contracts.Common;
 namespace Auth.Domain.Models;
 
 public class User

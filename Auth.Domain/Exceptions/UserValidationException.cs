@@ -6,5 +6,4 @@ public class UserValidationException : Exception
         : base(message)
     {
     }
-
 }

@@ -1,0 +1,118 @@
+using Booking.Application.Interfaces;
+using Booking.Application.Services.EventClientService;
+using Booking.Domain.Common;
+using Booking.Domain.Exceptions;
+using BookingEntity = Booking.Domain.Models.Booking;
+using Booking.Infrastructure.DataAccess;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+namespace Booking.Infrastructure.Repositories.BookingRepository;
+
+public class BookingRepository : IBookingRepository
+{
+    private readonly AppDbContext _appDbContext;
+    private readonly ILogger<BookingRepository> _logger;
+    private readonly IEventClientService _eventClientService;
+
+    public BookingRepository(AppDbContext appDbContext, IEventClientService eventClientService)
+        : this(appDbContext, NullLogger<BookingRepository>.Instance, eventClientService)
+    {
+    }
+
+    public BookingRepository(AppDbContext appDbContext, ILogger<BookingRepository> logger, IEventClientService eventClientService)
+    {
+        _appDbContext = appDbContext;
+        _logger = logger;
+        _eventClientService = eventClientService;
+    }
+
+    public async Task<BookingEntity?> GetBookingByIdAsync(Guid id)
+    {
+        return await _appDbContext.Bookings.FirstOrDefaultAsync(b => b.Id == id);
+    }
+
+    public async Task<BookingEntity> CreateBookingAsync(Guid eventId, Guid userId)
+    {
+        await using var transaction = await _appDbContext.Database.BeginTransactionAsync();
+
+        /*TODO а тут то чё делать?
+         
+        var affected = await _appDbContext.Events
+            .Where(e => e.Id == eventId && e.AvailableSeats > 0)
+            .ExecuteUpdateAsync(update => update.SetProperty(e => e.AvailableSeats, e => e.AvailableSeats - 1));
+
+        if (affected == 0)
+        {
+            throw new NoAvailableSeatsException(eventId);
+        }*/
+
+        var booking = new BookingEntity(eventId, userId);
+        await _appDbContext.Bookings.AddAsync(booking);
+        await _appDbContext.SaveChangesAsync();
+        await transaction.CommitAsync();
+        return booking;
+    }
+
+    public async Task<IReadOnlyList<BookingEntity>> GetBookingsAsync(BookingStatus? status = null)
+    {
+        var result = _appDbContext.Bookings.AsQueryable();
+        if (status != null)
+        {
+            result = result.Where((b) => b.Status == status);
+        }
+
+        var list = await result.ToListAsync();
+        return list.AsReadOnly();
+    }
+
+    public async Task<BookingEntity?> UpdateBookingAsync(BookingEntity updatedBooking, CancellationToken ct = default)
+    {
+        var booking = await GetBookingByIdAsync(updatedBooking.Id);
+        if (booking == null)
+        {
+            throw new BookingNotFoundException(updatedBooking.Id);
+        }
+        _logger.LogDebug("Updating booking {BookingId}", updatedBooking.Id);
+        _appDbContext.Update(updatedBooking);
+        await _appDbContext.SaveChangesAsync(ct);
+        return updatedBooking;
+    }
+
+    public async Task<bool> CancelBookingAsync(Guid bookingId)
+    {
+        var booking = await GetBookingByIdAsync(bookingId);
+        if (booking == null)
+        {
+            throw new BookingNotFoundException(bookingId);
+        }
+        
+        var evt = await _eventClientService.GetEventByIdAsync(booking.EventId); 
+        if (evt == null)
+        {
+            throw new EventNotFoundException(booking.EventId);
+        }
+
+        _logger.LogDebug("Cancelling booking {BookingId}", bookingId);
+
+        if (!booking.Cancel())
+        {
+            throw new BookingStatusConflictException(booking.Id);
+        }
+
+        /* TODO тут через kafka как я понимаю
+         * 
+         * evt.ReleaseSeats();
+         */
+        await _appDbContext.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<int> GetCountOfActiveBookingsAsync(Guid userId)
+    {
+        //TODO нужно придумать как делать проверку что Event.StartAt позже текущего времени. Неужели для каждого запрашивать в микросервис?
+        return await _appDbContext.Bookings.CountAsync((b) => b.UserId == userId
+                                                              && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending));
+    }
+}

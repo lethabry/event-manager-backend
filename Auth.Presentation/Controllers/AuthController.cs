@@ -1,6 +1,7 @@
 using Auth.Application.DTOs;
 using Auth.Application.Services.UserService;
-using Auth.Domain.Common;
+using EventManager.Contracts.DTOs;
+using EventManager.Contracts.Common;
 using Microsoft.AspNetCore.Mvc;
 namespace Auth.Presentation.Controllers;
 
@@ -46,5 +47,18 @@ public class AuthController : ControllerBase
     {
         var tokenResult = await _userService.LoginUserAsync(user);
         return Ok(tokenResult);
+    }
+    
+    /// <summary>
+    /// Метод для отображения ответа есть ли пользователь с указанным id
+    /// </summary>
+    /// <param name="id">Id пользователя</param>
+    [ProducesResponseType(typeof(UserExistingStatus), StatusCodes.Status200OK)]
+    [Produces("application/json")]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var existing = await _userService.CheckIfUserExists(id);
+        return Ok(existing);
     }
 }

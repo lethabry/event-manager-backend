@@ -1,6 +1,7 @@
 using Auth.Application.DTOs;
 using Auth.Application.Interfaces;
 using Auth.Application.Services.UserValidator;
+using EventManager.Contracts.DTOs;
 namespace Auth.Application.Services.UserService;
 
 public class UserService : IUserService
@@ -25,5 +26,11 @@ public class UserService : IUserService
         _validationService.ValidateUser(user);
         var token = await _userRepository.LoginUserAsync(user);
         return new UserTokenResult(token);
+    }
+
+    public async Task<UserExistingStatus> CheckIfUserExists(Guid userId)
+    {
+        var status = await _userRepository.CheckIfUserExistAsync(userId);
+        return new UserExistingStatus(status);
     }
 }

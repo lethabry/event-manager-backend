@@ -1,11 +1,11 @@
 using Auth.Application.DTOs;
 using Auth.Application.Interfaces;
-using Auth.Domain.Common;
-using Auth.Domain.Exceptions;
 using Auth.Domain.Models;
 using Auth.Infrastructure.DataAccess;
 using Auth.Infrastructure.Repositories.UserRepository;
 using Auth.Infrastructure.Services;
+using Auth.Domain.Exceptions;
+using EventManager.Contracts.Common;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 

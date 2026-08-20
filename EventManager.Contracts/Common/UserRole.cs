@@ -1,4 +1,4 @@
-namespace Auth.Domain.Common;
+namespace EventManager.Contracts.Common;
 
 public enum UserRole
 {

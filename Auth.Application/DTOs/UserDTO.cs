@@ -1,4 +1,4 @@
-using Auth.Domain.Common;
+using EventManager.Contracts.Common;
 namespace Auth.Application.DTOs;
 
 public record UserDTO()
