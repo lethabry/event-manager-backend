@@ -3,6 +3,7 @@ using Booking.Application.Services.EventClientService;
 using Booking.Domain.Common;
 using Booking.Domain.Exceptions;
 using EventManager.Common.DTOs;
+using EventManager.Contracts.Kafka.Messages.BookingConfirmed;
 using BookingEntity = Booking.Domain.Models.Booking;
 
 namespace Booking.Application.Services.BookingConfirmationService;
@@ -10,12 +11,14 @@ namespace Booking.Application.Services.BookingConfirmationService;
 public class BookingConfirmationService : IBookingConfirmationService
 {
     private readonly IBookingRepository _bookingRepository;
+    private readonly IBookingProducer _bookingProducer;
     private readonly IEventClientService _eventService;
 
-    public BookingConfirmationService(IBookingRepository bookingRepository, IEventClientService eventService)
+    public BookingConfirmationService(IBookingRepository bookingRepository, IEventClientService eventService, IBookingProducer bookingProducer)
     {
         _bookingRepository = bookingRepository;
         _eventService = eventService;
+        _bookingProducer = bookingProducer;
     }
 
     public async Task ProcessPendingBookingsAsync(CancellationToken ct)
@@ -40,7 +43,6 @@ public class BookingConfirmationService : IBookingConfirmationService
 
         try
         {
-            // Запрос идет по api EventClientService
             evt = await _eventService.GetEventByIdAsync(booking.EventId);
         }
         catch (OperationCanceledException)
@@ -49,13 +51,13 @@ public class BookingConfirmationService : IBookingConfirmationService
         }
         catch
         {
-            await RejectBookingAsync(booking, null, ct);
+            await RejectBookingAsync(booking, ct);
             return;
         }
 
-        if (evt == null)
+        if (evt == null || evt.AvailableSeats == 0)
         {
-            await RejectBookingAsync(booking, null, ct);
+            await RejectBookingAsync(booking, ct);
             return;
         }
 
@@ -63,7 +65,7 @@ public class BookingConfirmationService : IBookingConfirmationService
 
         if (activeBookingForUser > AppConstants.MaxActiveBookings)
         {
-            await RejectBookingAsync(booking, evt, ct);
+            await RejectBookingAsync(booking, ct);
             return;
         }
 
@@ -72,41 +74,32 @@ public class BookingConfirmationService : IBookingConfirmationService
             return;
         }
 
-        await _bookingRepository.UpdateBookingAsync(booking, ct);
+        var savedBooking = await _bookingRepository.UpdateBookingAsync(booking, ct);
+        if (savedBooking == null)
+        {
+            await RejectBookingAsync(booking, ct);
+            return;
+        }
+
+        var message = new BookingConfirmed()
+        {
+            BookingId = savedBooking.Id,
+            EventId = savedBooking.EventId,
+            UserId = savedBooking.UserId,
+            AmountSeats = 1,
+            ProcessedAt = savedBooking.ProcessedAt ?? DateTime.UtcNow,
+        };
+
+        await _bookingProducer.PublishBookingConfirmedMessageAsync(message, ct);
     }
 
-    private async Task RejectBookingAsync(BookingEntity booking, EventResponseDTO? evt, CancellationToken ct)
+    private async Task RejectBookingAsync(BookingEntity booking,  CancellationToken ct)
     {
         if (!booking.Reject())
         {
             return;
         }
 
-        var updatedBooking = await _bookingRepository.UpdateBookingAsync(booking, ct);
-        if (updatedBooking == null)
-        {
-            return;
-        }
-
-        if (evt == null)
-        {
-            return;
-        }
-
-
-        /* Вот тут должен работать kafka с отправкой сообщения
-
-         evt.ReleaseSeats();
-        var updatedEvent = new EventInfoDTO
-        {
-            Title = evt.Title,
-            Description = string.IsNullOrEmpty(evt.Description) ? null : evt.Description,
-            StartAt = evt.StartAt,
-            EndAt = evt.EndAt,
-            TotalSeats = evt.TotalSeats,
-            AvailableSeats = evt.AvailableSeats
-        };
-
-        await _eventService.UpdateEventAsync(evt.Id, updatedEvent);*/
+        await _bookingRepository.UpdateBookingAsync(booking, ct);
     }
 }

@@ -5,23 +5,25 @@ using Booking.Application.Services.UserClientService;
 using Booking.Domain.Common;
 using Booking.Domain.Exceptions;
 using EventManager.Common.Enums;
+using EventManager.Contracts.Kafka.Messages.BookingRejected;
 namespace Booking.Application.Services.BookingService;
 
 public class BookingService : IBookingService
 {
     private readonly IBookingRepository _bookingRepository;
     private readonly IEventClientService _eventClient;
-    private readonly  IUserClientService _userClientService;
-    /*private readonly IEventRepository _eventRepository;
-    private readonly IUserRepository _userRepository;*/
+    private readonly IUserClientService _userClientService;
+    private readonly IBookingProducer _bookingProducer;
 
-    public BookingService(IBookingRepository bookingRepository, IEventClientService eventClient, IUserClientService userClientService /*IEventRepository eventRepository, IUserRepository userRepository*/)
+    public BookingService(IBookingRepository bookingRepository,
+        IEventClientService eventClient,
+        IUserClientService userClientService,
+        IBookingProducer bookingProducer)
     {
         _bookingRepository = bookingRepository;
         _eventClient = eventClient;
         _userClientService = userClientService;
-        /*_eventRepository = eventRepository;
-        _userRepository = userRepository;*/
+        _bookingProducer = bookingProducer;
     }
 
     public async Task<BookingDTO?> GetBookingByIdAsync(Guid bookingId)
@@ -59,8 +61,8 @@ public class BookingService : IBookingService
         {
             throw new ActiveBookingLimitException(userId);
         }
-
-        var booking = await _bookingRepository.CreateBookingAsync(eventId, userId);
+        
+        var booking = await _bookingRepository.CreateBookingAsync(eventId, userId, evt.StartAt);
         return new BookingDTO(booking);
     }
 
@@ -72,11 +74,29 @@ public class BookingService : IBookingService
             throw new BookingNotFoundException(bookingId);
         }
 
+        var evt = await _eventClient.GetEventByIdAsync(booking.EventId);
+        if (evt == null)
+        {
+            throw new EventNotFoundException(booking.EventId);
+        }
+
         if (role == UserRole.User && booking.UserId != userId)
         {
             throw new AccessDeniedException("Отменять можно только собственные бронирования");
         }
 
-        await _bookingRepository.CancelBookingAsync(bookingId);
+        var isCanceled = await _bookingRepository.CancelBookingAsync(bookingId);
+        
+        if (isCanceled)
+        {
+            var message = new BookingRejected()
+            {
+                BookingId = booking.Id,
+                EventId = booking.EventId,
+                UserId = userId,
+                AmountSeats = 1
+            };
+            await _bookingProducer.PublishBookingRejectedMessageAsync(message);
+        }
     }
 }

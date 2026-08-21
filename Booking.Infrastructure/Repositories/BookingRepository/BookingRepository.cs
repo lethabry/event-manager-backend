@@ -14,18 +14,16 @@ public class BookingRepository : IBookingRepository
 {
     private readonly AppDbContext _appDbContext;
     private readonly ILogger<BookingRepository> _logger;
-    private readonly IEventClientService _eventClientService;
 
-    public BookingRepository(AppDbContext appDbContext, IEventClientService eventClientService)
-        : this(appDbContext, NullLogger<BookingRepository>.Instance, eventClientService)
+    public BookingRepository(AppDbContext appDbContext)
+        : this(appDbContext, NullLogger<BookingRepository>.Instance)
     {
     }
 
-    public BookingRepository(AppDbContext appDbContext, ILogger<BookingRepository> logger, IEventClientService eventClientService)
+    public BookingRepository(AppDbContext appDbContext, ILogger<BookingRepository> logger)
     {
         _appDbContext = appDbContext;
         _logger = logger;
-        _eventClientService = eventClientService;
     }
 
     public async Task<BookingEntity?> GetBookingByIdAsync(Guid id)
@@ -33,25 +31,11 @@ public class BookingRepository : IBookingRepository
         return await _appDbContext.Bookings.FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    public async Task<BookingEntity> CreateBookingAsync(Guid eventId, Guid userId)
+    public async Task<BookingEntity> CreateBookingAsync(Guid eventId, Guid userId, DateTime eventStartDate)
     {
-        await using var transaction = await _appDbContext.Database.BeginTransactionAsync();
-
-        /*TODO а тут то чё делать?
-         
-        var affected = await _appDbContext.Events
-            .Where(e => e.Id == eventId && e.AvailableSeats > 0)
-            .ExecuteUpdateAsync(update => update.SetProperty(e => e.AvailableSeats, e => e.AvailableSeats - 1));
-
-        if (affected == 0)
-        {
-            throw new NoAvailableSeatsException(eventId);
-        }*/
-
-        var booking = new BookingEntity(eventId, userId);
+        var booking = new BookingEntity(eventId, userId, eventStartDate);
         await _appDbContext.Bookings.AddAsync(booking);
         await _appDbContext.SaveChangesAsync();
-        await transaction.CommitAsync();
         return booking;
     }
 
@@ -87,12 +71,6 @@ public class BookingRepository : IBookingRepository
         {
             throw new BookingNotFoundException(bookingId);
         }
-        
-        var evt = await _eventClientService.GetEventByIdAsync(booking.EventId); 
-        if (evt == null)
-        {
-            throw new EventNotFoundException(booking.EventId);
-        }
 
         _logger.LogDebug("Cancelling booking {BookingId}", bookingId);
 
@@ -100,19 +78,13 @@ public class BookingRepository : IBookingRepository
         {
             throw new BookingStatusConflictException(booking.Id);
         }
-
-        /* TODO тут через kafka как я понимаю
-         * 
-         * evt.ReleaseSeats();
-         */
-        await _appDbContext.SaveChangesAsync();
         return true;
     }
 
     public async Task<int> GetCountOfActiveBookingsAsync(Guid userId)
     {
-        //TODO нужно придумать как делать проверку что Event.StartAt позже текущего времени. Неужели для каждого запрашивать в микросервис?
         return await _appDbContext.Bookings.CountAsync((b) => b.UserId == userId
-                                                              && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending));
+                                                              && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending)
+                                                              && b.EventStartAt > DateTime.UtcNow);
     }
 }
