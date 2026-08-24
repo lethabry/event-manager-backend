@@ -4,8 +4,10 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-      <UserSecretsId>4372bdbe-7e5e-443a-92be-81d780767d89</UserSecretsId>
-  </PropertyGroup>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);1591</NoWarn>
+        <UserSecretsId>4372bdbe-7e5e-443a-92be-81d780767d89</UserSecretsId>
+    </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Auth.Application\Auth.Application.csproj" />

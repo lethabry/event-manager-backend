@@ -49,16 +49,4 @@ public class AuthController : ControllerBase
         return Ok(tokenResult);
     }
     
-    /// <summary>
-    /// Метод для отображения ответа есть ли пользователь с указанным id
-    /// </summary>
-    /// <param name="id">Id пользователя</param>
-    [ProducesResponseType(typeof(UserExistingStatus), StatusCodes.Status200OK)]
-    [Produces("application/json")]
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
-    {
-        var existing = await _userService.CheckIfUserExists(id);
-        return Ok(existing);
-    }
 }

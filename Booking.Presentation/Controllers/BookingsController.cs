@@ -20,7 +20,7 @@ public class BookingsController : ControllerBase
     {
         _bookingService = bookingService;
     }
-    
+
     /// <summary>
     /// Метод для бронирования мероприятия
     /// </summary>
