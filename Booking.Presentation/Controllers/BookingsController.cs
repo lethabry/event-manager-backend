@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Booking.Application.DTOs;
 using Booking.Application.Services.BookingService;
 using Booking.Domain.Exceptions;
@@ -14,6 +13,8 @@ namespace Booking.Presentation.Controllers;
 [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
 public class BookingsController : ControllerBase
 {
+    private const string UserIdClaimType = "sub";
+    private const string RoleClaimType = "role";
     private readonly IBookingService _bookingService;
 
     public BookingsController(IBookingService bookingService)
@@ -33,7 +34,7 @@ public class BookingsController : ControllerBase
     [HttpPost("{eventId}/book")]
     public async Task<IActionResult> Book(Guid eventId)
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var userIdClaim = User.FindFirst(UserIdClaimType);
 
         if (userIdClaim == null)
         {
@@ -77,8 +78,8 @@ public class BookingsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> CancelBooking(Guid id)
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        var roleClaim = User.FindFirst(ClaimTypes.Role);
+        var userIdClaim = User.FindFirst(UserIdClaimType);
+        var roleClaim = User.FindFirst(RoleClaimType);
         if (userIdClaim == null || roleClaim == null)
         {
             return NotFound("Идентификатор пользователя не найден");

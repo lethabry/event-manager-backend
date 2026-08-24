@@ -1,0 +1,10 @@
+**/bin
+**/obj
+**/TestResults
+.git
+.idea
+.vs
+.agents
+.codex
+*.user
+*.suo

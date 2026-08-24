@@ -81,57 +81,54 @@ Bookings не проверяет наличие мероприятия и сво
 
 ## Требования
 
-- **.NET SDK**: .NET 10;
-- **Docker и Docker Compose**: для PostgreSQL, Kafka и ZooKeeper;
+- **Docker и Docker Compose**: для запуска всего стека одной командой;
+- **.NET SDK 10**: только для локального запуска сервисов без API-контейнеров;
 - свободные порты `5283`, `5018`, `5223`, `5433`–`5435` и `9092`.
 
 ## Быстрый старт
 
-### 1. Запустить PostgreSQL и Kafka
+### 1. Запустить весь стек
 
 Из корня репозитория выполните:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-Команда запускает три базы PostgreSQL, Kafka и ZooKeeper. Контейнеров приложений в `docker-compose.yml` нет: сервисы запускаются через `dotnet run` или IDE.
+Команда собирает и запускает:
 
-Проверить состояние контейнеров:
+- сервис Auth;
+- сервис Events;
+- сервис Bookings;
+- три отдельные базы PostgreSQL;
+- Kafka и ZooKeeper.
+
+Для локальной разработки Compose использует общий JWT-секрет по умолчанию. Его можно переопределить через переменную окружения `JWT_SECRET` или файл `.env`:
+
+```text
+JWT_SECRET=your-shared-secret-at-least-32-bytes-long
+```
+
+### 2. Проверить состояние
+
 
 ```bash
 docker compose ps
 ```
 
-### 2. Настроить подключения к базам
-
-В `appsettings.json` пароли PostgreSQL не указаны. Для контейнеров из `docker-compose.yml` задайте строки подключения через User Secrets:
-
-
-### 3. Собрать решение
+Посмотреть логи всех сервисов:
 
 ```bash
-dotnet restore EventManager.sln
-dotnet build EventManager.sln
+docker compose logs -f
 ```
 
-### 4. Запустить сервисы
-
-Откройте три терминала и выполните по одной команде в каждом:
+Посмотреть логи отдельного сервиса:
 
 ```bash
-dotnet run --project Auth.Presentation --launch-profile http
+docker compose logs -f auth
+docker compose logs -f events
+docker compose logs -f bookings
 ```
-
-```bash
-dotnet run --project Event.Presentation --launch-profile http
-```
-
-```bash
-dotnet run --project Booking.Presentation --launch-profile http
-```
-
-Рекомендуется запускать Events раньше Bookings: при старте Events пытается создать Kafka-топики `booking-events` и `booking-rejected`.
 
 Swagger UI:
 
@@ -139,25 +136,64 @@ Swagger UI:
 - Events: `http://localhost:5018/swagger`;
 - Bookings: `http://localhost:5223/swagger`.
 
-Миграции каждой базы применяются автоматически при старте соответствующего сервиса.
+Миграции каждой базы применяются автоматически при старте соответствующего API-контейнера. Events также создаёт Kafka-топики `booking-events` и `booking-rejected`.
+
+### 3. Остановить стек
+
+Остановить контейнеры без удаления данных:
+
+```bash
+docker compose down
+```
+
+Остановить контейнеры и удалить тома PostgreSQL:
+
+```bash
+docker compose down -v
+```
+
+### 4. Локальный запуск без API-контейнеров
+
+Если сервисы нужно запускать через `dotnet run` или IDE, поднимите только инфраструктуру:
+
+```bash
+docker compose up -d zookeeper kafka users-db events-db bookings-db
+```
+
+Задайте локальные строки подключения через User Secrets:
+
+
+После этого запустите сервисы в трёх терминалах:
+
+```bash
+dotnet run --project Auth.Presentation --launch-profile http
+dotnet run --project Event.Presentation --launch-profile http
+dotnet run --project Booking.Presentation --launch-profile http
+```
+
+При локальном запуске приложения подключаются к Kafka через `localhost:9092`. Внутри Docker используется адрес `kafka:29092`.
 
 ## Конфигурация
 
-Каждый сервис читает собственную строку подключения из `ConnectionStrings:DefaultConnection`. Значения можно задавать в `appsettings.json`, User Secrets или переменными окружения вида `ConnectionStrings__DefaultConnection`.
+Каждый сервис читает собственную строку подключения из `ConnectionStrings:DefaultConnection`. В Docker Compose строки подключения передаются через `ConnectionStrings__DefaultConnection` и используют внутренние имена `users-db`, `events-db` и `bookings-db`.
+
+При локальном запуске используются `localhost` и внешние порты `5433`, `5434` и `5435`.
 
 ### JWT
 
 Токен выдаёт только сервис Auth. Сервисы Events и Bookings проверяют его подпись, издателя, аудиторию и срок действия.
 
+Идентификатор пользователя хранится в claim `sub`, а роль — в claim `role`. Автоматическое преобразование claim-типов отключено, поэтому генератор токена, JWT-валидаторы и контроллер Bookings используют одинаковые имена.
+
 Во всех трёх сервисах секция `TokenSettings` должна содержать одинаковые значения `Secret`, `Issuer` и `Audience`:
 
 ```json
 {
-  TokenSettings: {
-    Secret: shared-secret-at-least-32-bytes-long,
-    Issuer: EventManagerApi,
-    Audience: EventManagerApi,
-    LifeTimeInMinutes: 15
+  "TokenSettings": {
+    "Secret": "shared-secret-at-least-32-bytes-long",
+    "Issuer": "EventManagerApi",
+    "Audience": "EventManagerApi",
+    "LifeTimeInMinutes": 15
   }
 }
 ```
@@ -170,10 +206,10 @@ Swagger UI:
 
 ```json
 {
-  Kafka: {
-    BootstrapServers: localhost:9092,
-    ConsumerGroup: events-service,
-    EnableAutoCommit: false
+  "Kafka": {
+    "BootstrapServers": "localhost:9092",
+    "ConsumerGroup": "events-service",
+    "EnableAutoCommit": false
   }
 }
 ```

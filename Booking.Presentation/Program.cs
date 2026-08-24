@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -72,6 +71,7 @@ builder.Services.AddAuthentication(options =>
 }).AddJwtBearer(options =>
 {
     options.IncludeErrorDetails = builder.Environment.IsDevelopment();
+    options.MapInboundClaims = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -83,7 +83,8 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero,
 
-        RoleClaimType = ClaimTypes.Role,
+        NameClaimType = "sub",
+        RoleClaimType = "role",
 
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(
