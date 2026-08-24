@@ -1,5 +1,4 @@
 using Booking.Application.Interfaces;
-using Booking.Application.Services.EventClientService;
 using Booking.Domain.Common;
 using Booking.Domain.Exceptions;
 using BookingEntity = Booking.Domain.Models.Booking;
@@ -31,9 +30,9 @@ public class BookingRepository : IBookingRepository
         return await _appDbContext.Bookings.FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    public async Task<BookingEntity> CreateBookingAsync(Guid eventId, Guid userId, DateTime eventStartDate)
+    public async Task<BookingEntity> CreateBookingAsync(Guid eventId, Guid userId)
     {
-        var booking = new BookingEntity(eventId, userId, eventStartDate);
+        var booking = new BookingEntity(eventId, userId);
         await _appDbContext.Bookings.AddAsync(booking);
         await _appDbContext.SaveChangesAsync();
         return booking;
@@ -78,13 +77,14 @@ public class BookingRepository : IBookingRepository
         {
             throw new BookingStatusConflictException(booking.Id);
         }
+        _appDbContext.Bookings.Update(booking);
+        await _appDbContext.SaveChangesAsync();
         return true;
     }
 
     public async Task<int> GetCountOfActiveBookingsAsync(Guid userId)
     {
         return await _appDbContext.Bookings.CountAsync((b) => b.UserId == userId
-                                                              && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending)
-                                                              && b.EventStartAt > DateTime.UtcNow);
+                                                              && (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Pending));
     }
 }

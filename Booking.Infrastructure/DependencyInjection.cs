@@ -1,7 +1,9 @@
 using Booking.Application.Interfaces;
+using Booking.Application.Services.BookingMessagesProcess;
 using Booking.Infrastructure.Configurations;
 using Booking.Infrastructure.DataAccess;
 using Booking.Infrastructure.Kafka;
+using Booking.Infrastructure.Kafka.BookingEventsConsumerWorker;
 using Booking.Infrastructure.Repositories.BookingRepository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +21,7 @@ public static class DependencyInjection
 
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddSingleton<IBookingProducer, BookingProducer>();
+        services.AddHostedService<BookingEventsConsumerWorker>();
 
         return services;
     }

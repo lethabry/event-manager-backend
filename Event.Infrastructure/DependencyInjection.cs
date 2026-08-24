@@ -1,6 +1,9 @@
 using Event.Application.Interfaces;
 using Event.Infrastructure.Configurations;
 using Event.Infrastructure.DataAccess;
+using Event.Infrastructure.Kafka.BookingEventsConsumerWorker;
+using Event.Infrastructure.Kafka.BookingProducer;
+using Event.Infrastructure.Kafka.KafkaTopicInitializerService;
 using Event.Infrastructure.Repositories.EventRepository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,10 +17,14 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
         services.AddOptions<TokenSettingsConfiguration>()
-            .Bind(configuration.GetRequiredSection(
-                TokenSettingsConfiguration.SectionName));
+            .Bind(configuration.GetRequiredSection( TokenSettingsConfiguration.SectionName));
+        services.AddOptions<KafkaConfiguration>()
+            .Bind(configuration.GetRequiredSection(KafkaConfiguration.SectionName));
 
         services.AddScoped<IEventRepository, EventRepository>();
+        services.AddSingleton<IBookingProducer, BookingProducer>();
+        services.AddHostedService<KafkaTopicInitializerService>();
+        services.AddHostedService<BookingEventsConsumerWorker>();
 
         return services;
     }

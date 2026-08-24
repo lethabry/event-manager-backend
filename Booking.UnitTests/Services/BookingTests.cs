@@ -94,7 +94,7 @@ public class BookingTests
     }
 
     [Fact]
-    public void rejectConfirmedBooking_ShouldNotChangeStatus()
+    public void rejectConfirmedBooking_ShouldChangeStatusToRejected()
     {
         //Arrange
         var eventId = Guid.NewGuid();
@@ -106,12 +106,12 @@ public class BookingTests
         var status = booking.Reject();
 
         //Assert
-        status.Should().Be(false);
+        status.Should().Be(true);
         booking.Should().NotBeNull();
         booking.Id.Should().NotBeEmpty();
         booking.UserId.Should().Be(userId);
         booking.EventId.Should().Be(eventId);
-        booking.Status.Should().Be(BookingStatus.Confirmed);
+        booking.Status.Should().Be(BookingStatus.Rejected);
         booking.ProcessedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         booking.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }

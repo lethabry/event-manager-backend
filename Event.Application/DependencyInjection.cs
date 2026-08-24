@@ -1,3 +1,5 @@
+using Event.Application.Interfaces;
+using Event.Application.Services.BookingMessagesProcess;
 using Event.Application.Services.EventService;
 using Event.Application.Services.EventValidatorService;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +12,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IEventValidatorService, EventValidatorService>();
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IBookingMessagesProcess, BookingMessagesProcess>();
 
         return services;
     }

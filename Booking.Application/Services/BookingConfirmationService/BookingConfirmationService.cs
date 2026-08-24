@@ -1,5 +1,4 @@
 using Booking.Application.Interfaces;
-using Booking.Application.Services.EventClientService;
 using Booking.Domain.Common;
 using Booking.Domain.Exceptions;
 using EventManager.Common.DTOs;
@@ -12,12 +11,10 @@ public class BookingConfirmationService : IBookingConfirmationService
 {
     private readonly IBookingRepository _bookingRepository;
     private readonly IBookingProducer _bookingProducer;
-    private readonly IEventClientService _eventService;
 
-    public BookingConfirmationService(IBookingRepository bookingRepository, IEventClientService eventService, IBookingProducer bookingProducer)
+    public BookingConfirmationService(IBookingRepository bookingRepository, IBookingProducer bookingProducer)
     {
         _bookingRepository = bookingRepository;
-        _eventService = eventService;
         _bookingProducer = bookingProducer;
     }
 
@@ -34,31 +31,10 @@ public class BookingConfirmationService : IBookingConfirmationService
 
     public async Task ProcessBookingAsync(Guid bookingId, CancellationToken ct)
     {
-        EventResponseDTO? evt;
         var booking = await _bookingRepository.GetBookingByIdAsync(bookingId);
         if (booking == null)
         {
             throw new BookingNotFoundException(bookingId);
-        }
-
-        try
-        {
-            evt = await _eventService.GetEventByIdAsync(booking.EventId);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch
-        {
-            await RejectBookingAsync(booking, ct);
-            return;
-        }
-
-        if (evt == null || evt.AvailableSeats == 0)
-        {
-            await RejectBookingAsync(booking, ct);
-            return;
         }
 
         var activeBookingForUser = await _bookingRepository.GetCountOfActiveBookingsAsync(booking.UserId);

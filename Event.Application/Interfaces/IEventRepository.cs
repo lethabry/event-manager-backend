@@ -10,4 +10,6 @@ public interface IEventRepository
     Task<EventEntity?> CreateEventAsync(CreateEventDTO newEvent);
     Task<EventEntity?> UpdateEventAsync(EventEntity updatedEvent);
     Task<bool> DeleteEventAsync(Guid id);
+    Task<bool> TryReserveSeatsAsync(Guid id, int amountSeats);
+    Task<bool> TryReleaseSeatsAsync(Guid id, int amountSeats);
 }

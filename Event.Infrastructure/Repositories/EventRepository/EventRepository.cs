@@ -1,6 +1,6 @@
 using Event.Application.DTOs;
 using Event.Application.Interfaces;
-using EventEntity =  Event.Domain.Models.Event;
+using EventEntity = Event.Domain.Models.Event;
 using Event.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -84,6 +84,21 @@ public class EventRepository : IEventRepository
         return true;
     }
 
+    public async Task<bool> TryReleaseSeatsAsync(Guid id, int amountSeats)
+    {
+        var affected = await _appDbContext.Events
+            .Where(e => e.Id == id && e.AvailableSeats + amountSeats <= e.TotalSeats)
+            .ExecuteUpdateAsync(update => update.SetProperty(e => e.AvailableSeats, e => e.AvailableSeats + amountSeats));
+        return affected == 1;
+    }
+
+    public async Task<bool> TryReserveSeatsAsync(Guid id, int amountSeats)
+    {
+        var affected = await _appDbContext.Events
+            .Where(e => e.Id == id && e.AvailableSeats >= amountSeats)
+            .ExecuteUpdateAsync(update => update.SetProperty(e => e.AvailableSeats, e => e.AvailableSeats - amountSeats));
+        return affected == 1;
+    }
     private IQueryable<EventEntity> FilterEvents(string? title, DateTime? from, DateTime? to)
     {
         var query = _appDbContext.Events.AsQueryable();
