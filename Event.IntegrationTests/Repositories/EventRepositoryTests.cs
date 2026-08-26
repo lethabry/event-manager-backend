@@ -1,0 +1,407 @@
+using Event.Application.DTOs;
+using EventEntity =  Event.Domain.Models.Event;
+using Event.Infrastructure.DataAccess;
+using Event.Infrastructure.Repositories.EventRepository;
+using Microsoft.EntityFrameworkCore;
+using Testcontainers.PostgreSql;
+
+namespace Event.IntegrationTests.Repositories;
+
+public class EventRepositoryTests : IAsyncLifetime
+{
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
+        .WithImage("postgres:16-alpine")
+        .Build();
+
+    public async Task InitializeAsync()
+    {
+        await _postgres.StartAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _postgres.DisposeAsync();
+    }
+
+    private AppDbContext CreateContext()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(_postgres.GetConnectionString())
+            .Options;
+
+        var context = new AppDbContext(options);
+        context.Database.Migrate();
+        return context;
+    }
+
+    private async Task ResetDatabaseAsync()
+    {
+        await using var context = CreateContext();
+        await context.Database.ExecuteSqlRawAsync(
+            "TRUNCATE TABLE events RESTART IDENTITY CASCADE");
+    }
+
+    [Fact]
+    public async Task CreateEvent_SavesEventToDatabase()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        await using var context = CreateContext();
+        var repository = new EventRepository(context);
+
+        var evtDTO = new CreateEventDTO()
+        {
+            Title = "Премьера: 'Дюна: Часть вторая' (IMAX)",
+            Description = "Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.",
+            EndAt = DateTime.UtcNow.AddDays(1),
+            StartAt = DateTime.UtcNow.AddDays(-1),
+            TotalSeats = 5,
+        };
+        // Act
+        var savedEvt = await repository.CreateEventAsync(evtDTO);
+
+        // Assert
+        await using var verifyContext = CreateContext();
+        var saved = await verifyContext.Events
+            .FirstOrDefaultAsync(e => e.Id == savedEvt.Id);
+
+        Assert.NotNull(saved);
+        Assert.Equal(evtDTO.Title, saved.Title);
+        Assert.Equal(evtDTO.Description, saved.Description);
+        Assert.Equal(evtDTO.TotalSeats, saved.TotalSeats);
+    }
+
+    [Fact]
+    public async Task CreateEvent_CheckMaxLengthTitle_ThrowsException()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        await using var context = CreateContext();
+        var repository = new EventRepository(context);
+
+        // Act && Assert
+        var evtDTO = new CreateEventDTO()
+        {
+            Title =
+                "Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)Премьера: 'Дюна: Часть вторая' (IMAX)",
+            Description = "Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.",
+            EndAt = DateTime.UtcNow.AddDays(1),
+            StartAt = DateTime.UtcNow.AddDays(-1),
+            TotalSeats = 5,
+        };
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => repository.CreateEventAsync(evtDTO));
+    }
+
+    [Fact]
+    public async Task CreateEvent_CheckMaxLengthDescription_ThrowsException()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        await using var context = CreateContext();
+        var repository = new EventRepository(context);
+
+        // Act && Assert
+        var evtDTO = new CreateEventDTO()
+        {
+            Title =
+                "Премьера: 'Дюна: Часть вторая'",
+            Description =
+                "Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.Фантастический фильм Дени Вильнёва. Сеанс на русском языке с субтитрами.",
+            EndAt = DateTime.UtcNow.AddDays(1),
+            StartAt = DateTime.UtcNow.AddDays(-1),
+            TotalSeats = 5,
+        };
+
+        await Assert.ThrowsAsync<DbUpdateException>(
+            () => repository.CreateEventAsync(evtDTO));
+    }
+
+    [Fact]
+    public async Task GetEvents_WithoutFilters_GetAllEvents()
+    {
+        //Arrange 
+        var now = DateTime.UtcNow;
+        await ResetDatabaseAsync();
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        var evt2 = EventEntity.Create("New Event", now, now.AddDays(1), 5);
+        await context.Events.AddRangeAsync([evt1, evt2]);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var events = await repository.GetEventsAsync(null, null, null, 1, 10);
+
+        //Assert
+        Assert.NotNull(events);
+        Assert.Equal(2, events.Count);
+    }
+
+    [Fact]
+    public async Task GetEvents_WithTitleFilter_GetFilteredEvents()
+    {
+        //Arrange 
+        var now = DateTime.UtcNow;
+        await ResetDatabaseAsync();
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        var evt2 = EventEntity.Create("New Event", now, now.AddDays(1), 5);
+        await context.Events.AddRangeAsync([evt1, evt2]);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var events = await repository.GetEventsAsync("new", null, null, 1, 10);
+
+        //Assert
+        Assert.NotNull(events);
+        Assert.Single(events);
+        Assert.Equal(evt2.Title, events.First().Title);
+    }
+
+    [Fact]
+    public async Task GetEvents_WithDataFromFilter_GetFilteredEvents()
+    {
+        //Arrange 
+        var now = DateTime.UtcNow;
+        await ResetDatabaseAsync();
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        var evt2 = EventEntity.Create("New Event", now.AddDays(-2), now.AddDays(-1), 5);
+        await context.Events.AddRangeAsync([evt1, evt2]);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var events = await repository.GetEventsAsync(null, now.AddDays(-1), null, 1, 10);
+
+        //Assert
+        Assert.NotNull(events);
+        Assert.Single(events);
+        Assert.Equal(evt1.Title, events.First().Title);
+    }
+
+    [Fact]
+    public async Task GetEvents_WithDataToFilter_GetFilteredEvents()
+    {
+        //Arrange 
+        var now = DateTime.UtcNow;
+        await ResetDatabaseAsync();
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        var evt2 = EventEntity.Create("New Event", now.AddDays(-2), now.AddDays(-1), 5);
+        await context.Events.AddRangeAsync([evt1, evt2]);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var events = await repository.GetEventsAsync(null, null, now, 1, 10);
+
+        //Assert
+        Assert.NotNull(events);
+        Assert.Single(events);
+        Assert.Equal(evt2.Title, events.First().Title);
+    }
+
+    [Fact]
+    public async Task GetEvents_CombinedFilters_GetFilteredEvents()
+    {
+        //Arrange
+        var now = DateTime.UtcNow;
+        await ResetDatabaseAsync();
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        var evt2 = EventEntity.Create("Test name", now.AddDays(2), now.AddDays(3), 5);
+        var evt3 = EventEntity.Create("New Event", now.AddDays(-2), now.AddDays(-1), 5);
+        await context.Events.AddRangeAsync([evt1, evt2, evt3]);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var events = await repository.GetEventsAsync("test", now, now.AddDays(1), 1, 10);
+
+        //Assert
+        Assert.NotNull(events);
+        Assert.Single(events);
+        Assert.Equal(evt1.Title, events.First().Title);
+    }
+
+    [Fact]
+    public async Task GetEvents_InvalidFilters_GetFilteredEvents()
+    {
+        //Arrange
+        var now = DateTime.UtcNow;
+        await ResetDatabaseAsync();
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        var evt2 = EventEntity.Create("Test name", now.AddDays(2), now.AddDays(3), 5);
+        var evt3 = EventEntity.Create("New Event", now.AddDays(-2), now.AddDays(-1), 5);
+        await context.Events.AddRangeAsync([evt1, evt2, evt3]);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var events = await repository.GetEventsAsync(null, now, now.AddDays(-1), 1, 10);
+
+        //Assert
+        Assert.NotNull(events);
+        Assert.Empty(events);
+    }
+
+    [Fact]
+    public async Task GetEvents_EmptyDatabase_GetEmptyList()
+    {
+        //Arrange
+        await ResetDatabaseAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var events = await repository.GetEventsAsync(null, null, null, 1, 10);
+
+        //Assert
+        Assert.NotNull(events);
+        Assert.Empty(events);
+    }
+
+    [Fact]
+    public async Task GetEventById_EmptyDatabase_GetNull()
+    {
+        //Arrange
+        await ResetDatabaseAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var evt = await repository.GetEventByIdAsync(Guid.NewGuid());
+
+        //Assert
+        Assert.Null(evt);
+    }
+
+    [Fact]
+    public async Task GetEventById_NotExistEventId_GetNull()
+    {
+        //Arrange
+        await ResetDatabaseAsync();
+        var now = DateTime.UtcNow;
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        var evt2 = EventEntity.Create("Test name", now.AddDays(2), now.AddDays(3), 5);
+        var evt3 = EventEntity.Create("New Event", now.AddDays(-2), now.AddDays(-1), 5);
+        await context.Events.AddRangeAsync([evt1, evt2, evt3]);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var evt = await repository.GetEventByIdAsync(Guid.NewGuid());
+
+        //Assert
+        Assert.Null(evt);
+    }
+
+    [Fact]
+    public async Task GetEventById_ExistEventId_GetEvent()
+    {
+        //Arrange
+        await ResetDatabaseAsync();
+        var now = DateTime.UtcNow;
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        var evt2 = EventEntity.Create("Test name", now.AddDays(2), now.AddDays(3), 5);
+        var evt3 = EventEntity.Create("New Event", now.AddDays(-2), now.AddDays(-1), 5);
+        await context.Events.AddRangeAsync([evt1, evt2, evt3]);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var e1 = await repository.GetEventByIdAsync(evt1.Id);
+        var e2 = await repository.GetEventByIdAsync(evt2.Id);
+        var e3 = await repository.GetEventByIdAsync(evt3.Id);
+
+        //Assert
+        Assert.NotNull(e1);
+        Assert.NotNull(e2);
+        Assert.NotNull(e3);
+        Assert.Equal(e1.Title, evt1.Title);
+        Assert.Equal(e2.Title, evt2.Title);
+        Assert.Equal(e3.Title, evt3.Title);
+    }
+
+    [Fact]
+    public async Task UpdateEvent_NotExistEventId_GetNull()
+    {
+        //Arrange
+        await ResetDatabaseAsync();
+        var now = DateTime.UtcNow;
+        var updatedEvent = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var updatedEvt = await repository.UpdateEventAsync(updatedEvent);
+
+        //Assert
+        Assert.Null(updatedEvt);
+    }
+
+    [Fact]
+    public async Task UpdateEvent_ExistingEvent_GetUpdatedEvent()
+    {
+        //Arrange
+        await ResetDatabaseAsync();
+        var now = DateTime.UtcNow;
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        await context.Events.AddAsync(evt1);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        evt1.Update("New ", now.AddDays(1), now.AddDays(2), 5, 5, "Test Description");
+        var updatedEvt = await repository.UpdateEventAsync(evt1);
+
+        //Assert
+        Assert.NotNull(updatedEvt);
+        Assert.Equal(updatedEvt.Title, evt1.Title);
+        Assert.Equal(updatedEvt.Description, evt1.Description);
+        Assert.Equal(updatedEvt.AvailableSeats, evt1.AvailableSeats);
+    }
+
+    [Fact]
+    public async Task DeleteEvent_NotExistEventId_ReturnFalse()
+    {
+        //Arrange
+        await ResetDatabaseAsync();
+        var now = DateTime.UtcNow;
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        await context.Events.AddAsync(evt1);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var result = await repository.DeleteEventAsync(Guid.NewGuid());
+
+        //Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task DeleteEvent_ExistEventId_ReturnTrue()
+    {
+        //Arrange
+        await ResetDatabaseAsync();
+        var now = DateTime.UtcNow;
+        await using var context = CreateContext();
+        var evt1 = EventEntity.Create("Test Event", now, now.AddDays(1), 5);
+        await context.Events.AddAsync(evt1);
+        await context.SaveChangesAsync();
+
+        //Act
+        var repository = new EventRepository(CreateContext());
+        var result = await repository.DeleteEventAsync(evt1.Id);
+
+        //Assert
+        Assert.True(result);
+    }
+}

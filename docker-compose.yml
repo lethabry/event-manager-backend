@@ -1,26 +1,174 @@
-# PostgreSQL для EventApi; пароль приложения задаётся через user-secrets или ConnectionStrings__DefaultConnection
-# Запуск из корня репозитория: docker compose up -d
-# Остановка: docker compose down
-# Данные сохраняются в именованном томе eventapi_pgdata
-
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: eventapi-postgres
-    restart: unless-stopped
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: event-manager-zookeeper
     environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 2181 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: event-manager-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  users-db:
+    image: postgres:16-alpine
+    container_name: event-manager-users-db
+    environment:
+      POSTGRES_DB: event_manager_users
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: eventapi
+    volumes:
+      - users-db-data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
-    volumes:
-      - eventapi_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d eventapi"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d event_manager_users"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+
+  events-db:
+    image: postgres:16-alpine
+    container_name: event-manager-events-db
+    environment:
+      POSTGRES_DB: event_manager_events
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - events-db-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d event_manager_events"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  bookings-db:
+    image: postgres:16-alpine
+    container_name: event-manager-bookings-db
+    environment:
+      POSTGRES_DB: event_manager_bookings
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - bookings-db-data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d event_manager_bookings"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Auth.Presentation/Auth.Presentation.csproj
+    container_name: event-manager-auth
+    command: ["Auth.Presentation.dll"]
+    depends_on:
+      users-db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=users-db;Port=5432;Database=event_manager_users;Username=postgres;Password=postgres
+      TokenSettings__Secret: ${JWT_SECRET:-Eg4we4JqA6PQhtZZ1Sdy4lC4h3a7WOq9A3YedX2Wcoe}
+      TokenSettings__Issuer: EventManagerApi
+      TokenSettings__Audience: EventManagerApi
+      TokenSettings__LifeTimeInMinutes: 15
+    ports:
+      - "5283:8080"
+    restart: unless-stopped
+
+  events:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Event.Presentation/Event.Presentation.csproj
+    container_name: event-manager-events
+    command: ["Event.Presentation.dll"]
+    depends_on:
+      events-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=events-db;Port=5432;Database=event_manager_events;Username=postgres;Password=postgres
+      TokenSettings__Secret: ${JWT_SECRET:-Eg4we4JqA6PQhtZZ1Sdy4lC4h3a7WOq9A3YedX2Wcoe}
+      TokenSettings__Issuer: EventManagerApi
+      TokenSettings__Audience: EventManagerApi
+      TokenSettings__LifeTimeInMinutes: 15
+      Kafka__BootstrapServers: kafka:29092
+      Kafka__ConsumerGroup: events-service
+      Kafka__TopicPartitions: 3
+      Kafka__TopicReplicationFactor: 1
+      Kafka__EnableAutoCommit: "false"
+    ports:
+      - "5018:8080"
+    restart: unless-stopped
+
+  bookings:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROJECT_PATH: Booking.Presentation/Booking.Presentation.csproj
+    container_name: event-manager-bookings
+    command: ["Booking.Presentation.dll"]
+    depends_on:
+      bookings-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      events:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=bookings-db;Port=5432;Database=event_manager_bookings;Username=postgres;Password=postgres
+      TokenSettings__Secret: ${JWT_SECRET:-Eg4we4JqA6PQhtZZ1Sdy4lC4h3a7WOq9A3YedX2Wcoe}
+      TokenSettings__Issuer: EventManagerApi
+      TokenSettings__Audience: EventManagerApi
+      TokenSettings__LifeTimeInMinutes: 15
+      Kafka__BootstrapServers: kafka:29092
+      Kafka__ConsumerGroup: bookings-service
+      Kafka__EnableAutoCommit: "false"
+    ports:
+      - "5223:8080"
+    restart: unless-stopped
 
 volumes:
-  eventapi_pgdata:
+  users-db-data:
+  events-db-data:
+  bookings-db-data:
