@@ -2,25 +2,25 @@ using System.Text.Json;
 using Event.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
-namespace Event.Infrastructure.Cacher;
+namespace Event.Infrastructure.Repositories.EventCacheRepository;
 
-public sealed class RedisCacher : ICacher
+public sealed class EventCacheRepository : ICacher
 {
     private readonly IDatabase _db;
-    private readonly ILogger<RedisCacher> _logger;
+    private readonly ILogger<EventCacheRepository> _logger;
     
-    public RedisCacher(IConnectionMultiplexer multiplexer, ILogger<RedisCacher> logger)
+    public EventCacheRepository(IConnectionMultiplexer multiplexer, ILogger<EventCacheRepository> logger)
     {
         _db = multiplexer.GetDatabase();
         _logger = logger;
     }
     
-    public async Task<T?> GetDataByIdAsync<T>(string id) where T : class
+    public async Task<T?> GetDataByKeyAsync<T>(string key) where T : class
     {
-        var value = await _db.StringGetAsync(id);
+        var value = await _db.StringGetAsync(key);
         if (!value.HasValue)
         {
-            _logger.LogInformation($"No data found for {id}");
+            _logger.LogInformation($"No data found for {key}");
             return null;
         }
         
@@ -31,7 +31,7 @@ public sealed class RedisCacher : ICacher
         }
         catch (Exception e)
         {
-            _logger.LogError(e, $"Error while reading data for {id}");
+            _logger.LogError(e, $"Error while reading data for {key}");
             return null;
         }
     }
@@ -51,7 +51,7 @@ public sealed class RedisCacher : ICacher
         }
     }
     
-    public async Task<bool> TryDeleteDataAsync<T>(string key)
+    public async Task<bool> TryDeleteDataAsync(string key)
     {
         try
         {

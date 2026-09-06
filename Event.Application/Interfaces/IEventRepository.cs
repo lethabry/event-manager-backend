@@ -12,4 +12,5 @@ public interface IEventRepository
     Task<bool> DeleteEventAsync(Guid id);
     Task<bool> TryReserveSeatsAsync(Guid id, int amountSeats);
     Task<bool> TryReleaseSeatsAsync(Guid id, int amountSeats);
+    Task<IReadOnlyList<EventEntity>> GetTopEventsAsync();
 }

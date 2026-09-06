@@ -15,12 +15,12 @@ namespace Event.Presentation.Controllers;
 public class EventsController : ControllerBase
 {
     private readonly IEventService _eventService;
-
+    
     public EventsController(IEventService eventService)
     {
         _eventService = eventService;
     }
-
+    
     /// <summary>
     /// Метод для получения всех мероприятий
     /// </summary>
@@ -40,7 +40,7 @@ public class EventsController : ControllerBase
         var events = await _eventService.GetEventsAsync(title, from, to, page, pageSize);
         return Ok(MapToPaginatedResponse(events));
     }
-
+    
     /// <summary>
     /// Метод для получения мероприятия по id
     /// </summary>
@@ -55,7 +55,7 @@ public class EventsController : ControllerBase
         var existing = await _eventService.GetEventByIdAsync(id);
         return Ok(MapToResponse(existing));
     }
-
+    
     /// <summary>
     /// Метод для создания мероприятия
     /// </summary>
@@ -71,7 +71,7 @@ public class EventsController : ControllerBase
         var createdEvent = await _eventService.CreateEventAsync(newEvent);
         return CreatedAtAction(nameof(GetById), new { id = createdEvent?.Id }, MapToResponse(createdEvent));
     }
-
+    
     /// <summary>
     /// Метод для изменения мероприятия
     /// </summary>
@@ -90,7 +90,7 @@ public class EventsController : ControllerBase
         var updatedEvent = await _eventService.UpdateEventAsync(id, changedEvent);
         return Ok(MapToResponse(updatedEvent));
     }
-
+    
     /// <summary>
     /// Метод для удаления мероприятия
     /// </summary>
@@ -106,9 +106,19 @@ public class EventsController : ControllerBase
         await _eventService.DeleteEventAsync(id);
         return NoContent();
     }
-
     
-
+    /// <summary>
+    /// Метод для получения топ-10 самых популярных событий 
+    /// </summary>
+    [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status200OK)]
+    [Produces("application/json")]
+    [HttpGet()]
+    public async Task<IActionResult> GetTopEvents()
+    {
+        var topEvents = await _eventService.GetTopEventsAsync();
+        return Ok(topEvents);
+    }
+    
     private static PaginatedResponseDTO<EventResponseDTO> MapToPaginatedResponse(PaginatedResultDTO<EventEntity> events)
     {
         return new PaginatedResponseDTO<EventResponseDTO>
@@ -119,14 +129,14 @@ public class EventsController : ControllerBase
             CurrentPageSize = events.CurrentPageSize
         };
     }
-
+    
     private static EventResponseDTO? MapToResponse(EventEntity? evt)
     {
         if (evt == null)
         {
             return null;
         }
-
+        
         return new EventResponseDTO
         {
             Id = evt.Id,
