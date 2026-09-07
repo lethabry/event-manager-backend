@@ -4,49 +4,49 @@ using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 namespace Event.Infrastructure.Repositories.EventCacheRepository;
 
-public sealed class EventCacheRepository : ICacher
+public sealed class EventCacheRepository : ICacher, IDisposable
 {
+    private readonly IConnectionMultiplexer _multiplexer;
     private readonly IDatabase _db;
     private readonly ILogger<EventCacheRepository> _logger;
     
     public EventCacheRepository(IConnectionMultiplexer multiplexer, ILogger<EventCacheRepository> logger)
     {
+        _multiplexer = multiplexer;
         _db = multiplexer.GetDatabase();
         _logger = logger;
     }
     
     public async Task<T?> GetDataByKeyAsync<T>(string key) where T : class
     {
-        var value = await _db.StringGetAsync(key);
-        if (!value.HasValue)
-        {
-            _logger.LogInformation($"No data found for {key}");
-            return null;
-        }
-        
         try
         {
-            var data = JsonSerializer.Deserialize<T>(value.ToString());
-            return data;
+            var value = await _db.StringGetAsync(key);
+            if (!value.HasValue)
+            {
+                _logger.LogInformation("No data found for {Key}", key);
+                return null;
+            }
+
+            return JsonSerializer.Deserialize<T>(value.ToString());
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            _logger.LogError(e, $"Error while reading data for {key}");
+            _logger.LogError(exception, "Error while reading data for {Key}", key);
             return null;
         }
     }
     
-    public async Task<bool> TryWriteDataAsync<T>(string key, T data, int ttl) where T : class
+    public async Task<bool> TryWriteDataAsync<T>(string key, T data, TimeSpan ttl) where T : class
     {
-        var stringData = JsonSerializer.Serialize(data);
         try
         {
-            await _db.StringSetAsync(key, stringData, TimeSpan.FromMinutes(ttl));
-            return true;
+            var stringData = JsonSerializer.Serialize(data);
+            return await _db.StringSetAsync(key, stringData, ttl);
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            _logger.LogError(e, $"Error while writing data for {key}");
+            _logger.LogError(exception, "Error while writing data for {Key}", key);
             return false;
         }
     }
@@ -55,13 +55,17 @@ public sealed class EventCacheRepository : ICacher
     {
         try
         {
-            await _db.KeyDeleteAsync(key);
-            return true;
+            return await _db.KeyDeleteAsync(key);
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            _logger.LogError($"Error while deleting data for {key}");
+            _logger.LogError(exception, "Error while deleting data for {Key}", key);
             return false;
         }
+    }
+
+    public void Dispose()
+    {
+        _multiplexer.Dispose();
     }
 }

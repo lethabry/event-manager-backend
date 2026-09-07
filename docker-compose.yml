@@ -34,10 +34,15 @@ services:
       timeout: 10s
       retries: 15
   redis:
-    image: redis:7
+    image: redis:7.2-alpine
     container_name: event-manager-redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   users-db:
     image: postgres:16-alpine
     container_name: event-manager-users-db
@@ -125,6 +130,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
@@ -133,8 +140,8 @@ services:
       TokenSettings__Issuer: EventManagerApi
       TokenSettings__Audience: EventManagerApi
       TokenSettings__LifeTimeInMinutes: 15
-      Redis__ConnectionPasword: redis
-      Redis__ConnectionString: event-manager-redis:6379
+      Redis__Host: redis:6379
+      Redis__Password: ""
       Kafka__BootstrapServers: kafka:29092
       Kafka__ConsumerGroup: events-service
       Kafka__TopicPartitions: 3

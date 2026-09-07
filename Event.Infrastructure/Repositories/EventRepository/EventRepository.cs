@@ -103,8 +103,7 @@ public class EventRepository : IEventRepository
     public async Task<IReadOnlyList<EventEntity>> GetTopEventsAsync()
     {
         var events = await _appDbContext.Events
-            .Where(evt => evt.AvailableSeats > 0)
-            .OrderByDescending(evt => (evt.TotalSeats - evt.AvailableSeats) / evt.TotalSeats)
+            .OrderByDescending(evt => (double)(evt.TotalSeats - evt.AvailableSeats) / evt.TotalSeats)
             .Take(10)
             .ToListAsync();
         return events.AsReadOnly();

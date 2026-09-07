@@ -110,13 +110,14 @@ public class EventsController : ControllerBase
     /// <summary>
     /// Метод для получения топ-10 самых популярных событий 
     /// </summary>
-    [ProducesResponseType(typeof(EventResponseDTO), StatusCodes.Status200OK)]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(IReadOnlyList<EventResponseDTO>), StatusCodes.Status200OK)]
     [Produces("application/json")]
-    [HttpGet()]
+    [HttpGet("top")]
     public async Task<IActionResult> GetTopEvents()
     {
         var topEvents = await _eventService.GetTopEventsAsync();
-        return Ok(topEvents);
+        return Ok(topEvents.Select(MapToResponse).ToList());
     }
     
     private static PaginatedResponseDTO<EventResponseDTO> MapToPaginatedResponse(PaginatedResultDTO<EventEntity> events)
