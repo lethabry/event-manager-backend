@@ -12,18 +12,18 @@ public class EventRepository : IEventRepository
 {
     private readonly AppDbContext _appDbContext;
     private readonly ILogger<EventRepository> _logger;
-
+    
     public EventRepository(AppDbContext appDbContext)
         : this(appDbContext, NullLogger<EventRepository>.Instance)
     {
     }
-
+    
     public EventRepository(AppDbContext appDbContext, ILogger<EventRepository> logger)
     {
         _appDbContext = appDbContext;
         _logger = logger;
     }
-
+    
     public async Task<IReadOnlyList<EventEntity>> GetEventsAsync(string? title, DateTime? from, DateTime? to, int page, int pageSize)
     {
         var list = await FilterEvents(title, from, to)
@@ -34,17 +34,17 @@ public class EventRepository : IEventRepository
             .ToListAsync();
         return list.AsReadOnly();
     }
-
+    
     public Task<int> GetEventsCountAsync(string? title, DateTime? from, DateTime? to)
     {
         return FilterEvents(title, from, to).CountAsync();
     }
-
+    
     public async Task<EventEntity?> GetEventByIdAsync(Guid id)
     {
         return await _appDbContext.Events.FirstOrDefaultAsync(evt => evt.Id == id);
     }
-
+    
     public async Task<EventEntity?> CreateEventAsync(CreateEventDTO newEvent)
     {
         var createdEvent = EventEntity.Create(newEvent.Title, newEvent.StartAt, newEvent.EndAt, newEvent.TotalSeats, string.IsNullOrEmpty(newEvent.Description) ? null : newEvent.Description);
@@ -53,7 +53,7 @@ public class EventRepository : IEventRepository
         await _appDbContext.SaveChangesAsync();
         return createdEvent;
     }
-
+    
     public async Task<EventEntity?> UpdateEventAsync(EventEntity updatedEvent)
     {
         var exists = await _appDbContext.Events.AnyAsync(evt => evt.Id == updatedEvent.Id);
@@ -61,7 +61,7 @@ public class EventRepository : IEventRepository
         {
             return null;
         }
-
+        
         if (_appDbContext.Entry(updatedEvent).State == EntityState.Detached)
         {
             _appDbContext.Events.Update(updatedEvent);
@@ -70,7 +70,7 @@ public class EventRepository : IEventRepository
         await _appDbContext.SaveChangesAsync();
         return updatedEvent;
     }
-
+    
     public async Task<bool> DeleteEventAsync(Guid id)
     {
         var evt = _appDbContext.Events.FirstOrDefault(e => e.Id == id);
@@ -83,7 +83,7 @@ public class EventRepository : IEventRepository
         await _appDbContext.SaveChangesAsync();
         return true;
     }
-
+    
     public async Task<bool> TryReleaseSeatsAsync(Guid id, int amountSeats)
     {
         var affected = await _appDbContext.Events
@@ -91,7 +91,7 @@ public class EventRepository : IEventRepository
             .ExecuteUpdateAsync(update => update.SetProperty(e => e.AvailableSeats, e => e.AvailableSeats + amountSeats));
         return affected == 1;
     }
-
+    
     public async Task<bool> TryReserveSeatsAsync(Guid id, int amountSeats)
     {
         var affected = await _appDbContext.Events
@@ -99,6 +99,16 @@ public class EventRepository : IEventRepository
             .ExecuteUpdateAsync(update => update.SetProperty(e => e.AvailableSeats, e => e.AvailableSeats - amountSeats));
         return affected == 1;
     }
+    
+    public async Task<IReadOnlyList<EventEntity>> GetTopEventsAsync()
+    {
+        var events = await _appDbContext.Events
+            .OrderByDescending(evt => (double)(evt.TotalSeats - evt.AvailableSeats) / evt.TotalSeats)
+            .Take(10)
+            .ToListAsync();
+        return events.AsReadOnly();
+    }
+    
     private IQueryable<EventEntity> FilterEvents(string? title, DateTime? from, DateTime? to)
     {
         var query = _appDbContext.Events.AsQueryable();
@@ -106,17 +116,17 @@ public class EventRepository : IEventRepository
         {
             query = query.Where(evt => evt.Title.ToLower().Contains(title.ToLower()));
         }
-
+        
         if (from.HasValue)
         {
             query = query.Where(evt => evt.StartAt >= from.Value);
         }
-
+        
         if (to.HasValue)
         {
             query = query.Where(evt => evt.EndAt <= to.Value);
         }
-
+        
         return query;
     }
 }

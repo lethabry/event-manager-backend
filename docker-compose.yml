@@ -6,7 +6,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 2181 || exit 1"]
+      test: [ "CMD-SHELL", "nc -z localhost 2181 || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -29,11 +29,20 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     healthcheck:
-      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list || exit 1"]
+      test: [ "CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list || exit 1" ]
       interval: 10s
       timeout: 10s
       retries: 15
-
+  redis:
+    image: redis:7.2-alpine
+    container_name: event-manager-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   users-db:
     image: postgres:16-alpine
     container_name: event-manager-users-db
@@ -46,7 +55,7 @@ services:
     ports:
       - "5433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d event_manager_users"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d event_manager_users" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -63,7 +72,7 @@ services:
     ports:
       - "5434:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d event_manager_events"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d event_manager_events" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -80,7 +89,7 @@ services:
     ports:
       - "5435:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d event_manager_bookings"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d event_manager_bookings" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -92,7 +101,7 @@ services:
       args:
         PROJECT_PATH: Auth.Presentation/Auth.Presentation.csproj
     container_name: event-manager-auth
-    command: ["Auth.Presentation.dll"]
+    command: [ "Auth.Presentation.dll" ]
     depends_on:
       users-db:
         condition: service_healthy
@@ -115,11 +124,13 @@ services:
       args:
         PROJECT_PATH: Event.Presentation/Event.Presentation.csproj
     container_name: event-manager-events
-    command: ["Event.Presentation.dll"]
+    command: [ "Event.Presentation.dll" ]
     depends_on:
       events-db:
         condition: service_healthy
       kafka:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -129,6 +140,8 @@ services:
       TokenSettings__Issuer: EventManagerApi
       TokenSettings__Audience: EventManagerApi
       TokenSettings__LifeTimeInMinutes: 15
+      Redis__Host: redis:6379
+      Redis__Password: ""
       Kafka__BootstrapServers: kafka:29092
       Kafka__ConsumerGroup: events-service
       Kafka__TopicPartitions: 3
@@ -145,7 +158,7 @@ services:
       args:
         PROJECT_PATH: Booking.Presentation/Booking.Presentation.csproj
     container_name: event-manager-bookings
-    command: ["Booking.Presentation.dll"]
+    command: [ "Booking.Presentation.dll" ]
     depends_on:
       bookings-db:
         condition: service_healthy
