@@ -1,8 +1,10 @@
+using Event.Application.Configurations;
 using Event.Application.Interfaces;
 using EventManager.Contracts.Kafka.Messages.BookingCancelled;
 using EventManager.Contracts.Kafka.Messages.BookingConfirmed;
 using EventManager.Contracts.Kafka.Messages.BookingRejected;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Event.Application.Services.BookingMessagesProcess;
 
@@ -11,12 +13,17 @@ public class BookingMessagesProcess : IBookingMessagesProcess
     private readonly ILogger<BookingMessagesProcess> _logger;
     private readonly IEventRepository _eventRepository;
     private readonly IBookingProducer _bookingProducer;
+    private readonly ICacher? _cacheRepository;
+    private readonly EventCacheOptions _cacheOptions;
 
-    public BookingMessagesProcess(ILogger<BookingMessagesProcess> logger, IEventRepository eventRepository, IBookingProducer bookingProducer)
+    public BookingMessagesProcess(ILogger<BookingMessagesProcess> logger, IEventRepository eventRepository,
+        IBookingProducer bookingProducer, ICacher? cacheRepository = null, IOptions<EventCacheOptions>? cacheOptions = null)
     {
         _logger = logger;
         _eventRepository = eventRepository;
         _bookingProducer = bookingProducer;
+        _cacheRepository = cacheRepository;
+        _cacheOptions = cacheOptions?.Value ?? new EventCacheOptions();
     }
 
     public async Task HandleProcessAsync(BookingConfirmed message, CancellationToken cancellationToken)
@@ -44,6 +51,7 @@ public class BookingMessagesProcess : IBookingMessagesProcess
         var updated = await _eventRepository.TryReserveSeatsAsync(message.EventId, message.AmountSeats);
         if (updated)
         {
+            await InvalidateEventCacheAsync(message.EventId);
             _logger.LogInformation("Количество мест у мероприятия с id {EventId} уменьшено на {AmountSeats}", message.EventId, message.AmountSeats);
         }
         else
@@ -71,6 +79,7 @@ public class BookingMessagesProcess : IBookingMessagesProcess
         var updated = await _eventRepository.TryReleaseSeatsAsync(message.EventId, message.AmountSeats);
         if (updated)
         {
+            await InvalidateEventCacheAsync(message.EventId);
             _logger.LogInformation("Количество мест у мероприятия с id {EventId} увеличено на {AmountSeats}", message.EventId, message.AmountSeats);
         }
         else
@@ -87,6 +96,16 @@ public class BookingMessagesProcess : IBookingMessagesProcess
     private bool IsInvalidMessage(BookingCancelled message)
     {
         return message.AmountSeats <= 0 || message.EventId == Guid.Empty || message.UserId == Guid.Empty || message.BookingId == Guid.Empty;
+    }
+
+    private async Task InvalidateEventCacheAsync(Guid eventId)
+    {
+        if (_cacheRepository == null)
+        {
+            return;
+        }
+
+        await _cacheRepository.TryDeleteDataAsync($"{_cacheOptions.EventKeyPrefix}:{eventId}");
     }
 
     private async Task SendRejectedMessage(BookingConfirmed message, CancellationToken cancellationToken)

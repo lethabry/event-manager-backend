@@ -25,7 +25,13 @@ public sealed class Event
     public static Event Reconstruct(string title, DateTime startAt, DateTime endAt, int totalSeats, int availableSeats,
         string? description = null)
     {
-        var evt = new Event();
+        return Reconstruct(Guid.NewGuid(), title, startAt, endAt, totalSeats, availableSeats, description);
+    }
+
+    public static Event Reconstruct(Guid id, string title, DateTime startAt, DateTime endAt, int totalSeats,
+        int availableSeats, string? description = null)
+    {
+        var evt = new Event { Id = id };
         evt.Update(title, startAt, endAt, totalSeats, availableSeats, description);
         return evt;
     }

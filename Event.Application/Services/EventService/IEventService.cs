@@ -11,4 +11,5 @@ public interface IEventService
     Task<EventEntity?> CreateEventAsync(CreateEventDTO newEvent);
     Task<EventEntity?> UpdateEventAsync(Guid id, EventInfoDTO updatedEvent);
     Task DeleteEventAsync(Guid id);
+    Task <IReadOnlyList<EventEntity>> GetTopEventsAsync();
 }
