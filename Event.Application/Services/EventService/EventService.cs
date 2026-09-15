@@ -85,10 +85,6 @@ public class EventService : IEventService
     {
         _validation.ValidateEventDTO(newEvent);
         var createdEvent = await _repository.CreateEventAsync(newEvent);
-        if (createdEvent != null)
-        {
-            await InvalidateTopEventsCacheAsync();
-        }
 
         return createdEvent;
     }
@@ -128,8 +124,6 @@ public class EventService : IEventService
             _logger.LogInformation("Event saved to cache successfully");
         }
 
-        await InvalidateTopEventsCacheAsync();
-
         return savedEvent;
     }
 
@@ -151,8 +145,6 @@ public class EventService : IEventService
         {
             _logger.LogInformation("Event deleted from cache successfully");
         }
-
-        await InvalidateTopEventsCacheAsync();
     }
 
     public async Task<IReadOnlyList<EventEntity>> GetTopEventsAsync()
@@ -186,14 +178,5 @@ public class EventService : IEventService
     private string GetEventCacheKey(Guid id)
     {
         return $"{_cacheOptions.EventKeyPrefix}:{id}";
-    }
-
-    private async Task InvalidateTopEventsCacheAsync()
-    {
-        var isCacheDeleted = await _cacheRepository.TryDeleteDataAsync(_cacheOptions.TopEventsKey);
-        if (isCacheDeleted)
-        {
-            _logger.LogInformation("Top events cache invalidated successfully");
-        }
     }
 }
