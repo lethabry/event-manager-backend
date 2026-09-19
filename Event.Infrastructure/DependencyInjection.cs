@@ -16,7 +16,8 @@ namespace Event.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
@@ -26,6 +27,8 @@ public static class DependencyInjection
             .Bind(configuration.GetRequiredSection(KafkaConfiguration.SectionName));
         services.AddOptions<EventCacheOptions>()
             .Bind(configuration.GetRequiredSection(EventCacheOptions.SectionName));
+        services.AddOptions<OpenTelemetryConfiguration>()
+            .Bind(configuration.GetRequiredSection(OpenTelemetryConfiguration.SectionName));
         
         var redisSettings = configuration.GetRequiredSection(RedisConfiguration.SectionName).Get<RedisConfiguration>();
         var options = new ConfigurationOptions

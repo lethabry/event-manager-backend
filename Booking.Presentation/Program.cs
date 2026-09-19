@@ -14,6 +14,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,10 +37,10 @@ builder.Services.AddSwaggerGen(options =>
         In = ParameterLocation.Header,
         Description = "Введите только ваш JWT токен (без слова Bearer)"
     };
-
+    
     options.AddSecurityDefinition("bearer", securityScheme);
     options.OperationFilter<AuthorizeOperationFilter>();
-
+    
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);
@@ -50,6 +56,40 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddHostedService<BookingConfirmationBackgroundService>();
 
+builder.AddOpenTelemetry()
+    .ConfigureResource(r =>
+        r.AddService(
+            serviceName: builder.Configuration.GetSection("OpenTelemetry").GetValue<string>("ServiceName"),
+            serviceVersion: builder.Configuration.GetSection("OpenTelemetry").GetValue<string>("Version")))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation(o =>
+        {
+            o.Filter = httpContext =>
+            {
+                var path = httpContext.Request.Path;
+                return !path.StartsWithSegments("/metrics");
+            };
+        })
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(o =>
+            {
+                o.Endpoint =
+                    new Uri(builder.Configuration.GetSection("OpenTelemetry").GetValue<string>("OtlpEndpoint"));
+                o.Protocol = OtlpExportProtocol.Grpc;
+                o.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 2000;
+                o.BatchExportProcessorOptions.ExporterTimeoutMilliseconds = 3000;
+            }
+        ))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddPrometheusExporter());
+
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+        .WriteTo.Console(new CompactJsonFormatter()));
+
 if (builder.Environment.IsDevelopment())
 {
     builder.Host.UseDefaultServiceProvider(options =>
@@ -60,9 +100,9 @@ if (builder.Environment.IsDevelopment())
 }
 
 var tokenSettings = builder.Configuration
-    .GetRequiredSection(TokenSettingsConfiguration.SectionName)
-    .Get<TokenSettingsConfiguration>()
-    ?? throw new InvalidOperationException("TokenSettings section is invalid");
+                        .GetRequiredSection(TokenSettingsConfiguration.SectionName)
+                        .Get<TokenSettingsConfiguration>()
+                    ?? throw new InvalidOperationException("TokenSettings section is invalid");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -76,16 +116,16 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuer = true,
         ValidIssuer = tokenSettings.Issuer,
-
+        
         ValidateAudience = true,
         ValidAudience = tokenSettings.Audience,
-
+        
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero,
-
+        
         NameClaimType = "sub",
         RoleClaimType = "role",
-
+        
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(tokenSettings.Secret))
@@ -151,5 +191,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapControllers();
+
+app.MapPrometheusScrapingEndpoint();
 
 app.Run();

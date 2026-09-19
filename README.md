@@ -302,6 +302,43 @@ Redis не является обязательной зависимостью д
 4. В Swagger сервиса Events или Bookings нажмите `Authorize`.
 5. Вставьте JWT без префикса `Bearer`.
 
+## Мониторинг и наблюдаемость
+
+Во все три сервиса (Auth, Events, Bookings) добавлены OpenTelemetry SDK и Serilog, а в `docker-compose.yml` — контейнеры Prometheus, Jaeger и Grafana.
+
+| Инструмент | Назначение | UI |
+|---|---|---|
+| **Prometheus** | сбор метрик сервисов | `http://localhost:9090` |
+| **Jaeger** | просмотр распределённых трейсов | `http://localhost:16686` |
+| **Grafana** | дашборды метрик (логин `admin`, пароль `admin`) | `http://localhost:3000` |
+
+**Что настроено:**
+
+- **Трейсы.** OpenTelemetry автоматически инструментирует входящие HTTP-запросы (ASP.NET Core), исходящие HTTP-запросы (HttpClient) и запросы к базе (EF Core). Трейсы экспортируются в Jaeger по OTLP gRPC (`jaeger:4317` внутри Docker, `localhost:4317` локально). Каждый сервис виден в Jaeger под своим именем: `auth-service`, `event-service`, `booking-service`.
+- **Метрики.** Каждый сервис публикует метрики ASP.NET Core (latency, throughput, error rate) и рантайма .NET на эндпоинте `/metrics`. Prometheus собирает их со всех трёх сервисов каждые 15 секунд по конфигурации из `prometheus.yml`.
+- **Логи.** Serilog пишет логи в stdout в структурированном JSON-формате (`CompactJsonFormatter`), включая идентификаторы трейса и спана. Посмотреть: `docker compose logs -f auth | events | bookings`.
+- **Дашборд.** В Grafana создан дашборд с метриками latency (p50/p95/p99), throughput (RPS), активных запросов и error rate. Его экспорт лежит в репозитории — файл `grafana-dashboard.json`.
+
+### Запуск стека мониторинга
+
+Системы мониторинга входят в общий `docker-compose.yml` и стартуют вместе со всем стеком:
+
+```bash
+docker compose up -d --build
+```
+
+Поднять только системы мониторинга без API-сервисов:
+
+```bash
+docker compose up -d prometheus jaeger grafana
+```
+
+### Настройка Grafana
+
+1. Откройте `http://localhost:3000` и войдите (`admin` / `admin`).
+2. Добавьте источник данных: **Connections → Data sources → Add data source → Prometheus**, в поле URL укажите `http://prometheus:9090` (внутри сети Docker сервисы доступны по именам). Нажмите **Save & test**.
+3. Импортируйте дашборд: **Dashboards → New → Import** → загрузите `grafana-dashboard.json` из корня репозитория.
+
 ## API Endpoints
 
 ### Аутентификация

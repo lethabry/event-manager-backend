@@ -33,6 +33,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 15
+  
   redis:
     image: redis:7.2-alpine
     container_name: event-manager-redis
@@ -43,6 +44,34 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: event-manager-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    container_name: event-manager-jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: event-manager-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+  
   users-db:
     image: postgres:16-alpine
     container_name: event-manager-users-db
@@ -113,6 +142,9 @@ services:
       TokenSettings__Issuer: EventManagerApi
       TokenSettings__Audience: EventManagerApi
       TokenSettings__LifeTimeInMinutes: 15
+      OpenTelemetry__OtlpEndpoint: http://jaeger:4317
+      OpenTelemetry__ServiceName: "auth-service"
+      OpenTelemetry__Version: "1.0.0"  
     ports:
       - "5283:8080"
     restart: unless-stopped
@@ -147,6 +179,9 @@ services:
       Kafka__TopicPartitions: 3
       Kafka__TopicReplicationFactor: 1
       Kafka__EnableAutoCommit: "false"
+      OpenTelemetry__OtlpEndpoint: http://jaeger:4317
+      OpenTelemetry__ServiceName: "event-service"
+      OpenTelemetry__Version: "1.0.0"
     ports:
       - "5018:8080"
     restart: unless-stopped
@@ -177,6 +212,9 @@ services:
       Kafka__BootstrapServers: kafka:29092
       Kafka__ConsumerGroup: bookings-service
       Kafka__EnableAutoCommit: "false"
+      OpenTelemetry__OtlpEndpoint: http://jaeger:4317
+      OpenTelemetry__ServiceName: "booking-service"
+      OpenTelemetry__Version: "1.0.0"
     ports:
       - "5223:8080"
     restart: unless-stopped
@@ -185,3 +223,4 @@ volumes:
   users-db-data:
   events-db-data:
   bookings-db-data:
+  grafana-data:
