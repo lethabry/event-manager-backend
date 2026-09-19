@@ -17,6 +17,8 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Formatting.Compact;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,7 +74,7 @@ builder.AddOpenTelemetry()
             {
                 o.Endpoint =
                     new Uri(builder.Configuration.GetSection("OpenTelemetry").GetValue<string>("OtlpEndpoint"));
-                o.Protocol = OtlpExportProtocol.HttpProtobuf;
+                o.Protocol = OtlpExportProtocol.Grpc;
                 o.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 2000;
                 o.BatchExportProcessorOptions.ExporterTimeoutMilliseconds = 3000;
             }
@@ -162,6 +164,10 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
+
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+        .WriteTo.Console(new CompactJsonFormatter()));
 
 var app = builder.Build();
 
