@@ -18,9 +18,7 @@ public static class DependencyInjection
         services.AddOptions<TokenSettingsConfiguration>()
             .Bind(configuration.GetRequiredSection(
                 TokenSettingsConfiguration.SectionName));
-        services.AddOptions<OpenTelemetryConfiguration>()
-            .Bind(configuration.GetRequiredSection(OpenTelemetryConfiguration.SectionName));
-        
+
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddSingleton<IHasher, Hasher>();
         services.AddSingleton<ITokenGenerator, JwtTokenGeneratorService>();

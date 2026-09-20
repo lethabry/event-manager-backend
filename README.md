@@ -314,10 +314,10 @@ Redis не является обязательной зависимостью д
 
 **Что настроено:**
 
-- **Трейсы.** OpenTelemetry автоматически инструментирует входящие HTTP-запросы (ASP.NET Core), исходящие HTTP-запросы (HttpClient) и запросы к базе (EF Core). Трейсы экспортируются в Jaeger по OTLP gRPC (`jaeger:4317` внутри Docker, `localhost:4317` локально). Каждый сервис виден в Jaeger под своим именем: `auth-service`, `event-service`, `booking-service`.
+- **Трейсы.** OpenTelemetry автоматически инструментирует входящие HTTP-запросы (ASP.NET Core), исходящие HTTP-запросы (HttpClient) и запросы к базе (EF Core, включая текст SQL-запросов в атрибутах спанов). Трейсы экспортируются в Jaeger по OTLP gRPC (`jaeger:4317` внутри Docker, `localhost:4317` локально). Каждый сервис виден в Jaeger под своим именем: `auth-service`, `event-service`, `booking-service`.
 - **Метрики.** Каждый сервис публикует метрики ASP.NET Core (latency, throughput, error rate) и рантайма .NET на эндпоинте `/metrics`. Prometheus собирает их со всех трёх сервисов каждые 15 секунд по конфигурации из `prometheus.yml`.
 - **Логи.** Serilog пишет логи в stdout в структурированном JSON-формате (`CompactJsonFormatter`), включая идентификаторы трейса и спана. Посмотреть: `docker compose logs -f auth | events | bookings`.
-- **Дашборд.** В Grafana создан дашборд с метриками latency (p50/p95/p99), throughput (RPS), активных запросов и error rate. Его экспорт лежит в репозитории — файл `grafana-dashboard.json`.
+- **Дашборд.** В Grafana создан дашборд с метриками latency (p50/p95/p99), throughput (RPS), активных запросов и error rate. Его определение лежит в репозитории — файл `grafana/dashboards/grafana-dashboard.json`.
 
 ### Запуск стека мониторинга
 
@@ -335,9 +335,12 @@ docker compose up -d prometheus jaeger grafana
 
 ### Настройка Grafana
 
-1. Откройте `http://localhost:3000` и войдите (`admin` / `admin`).
-2. Добавьте источник данных: **Connections → Data sources → Add data source → Prometheus**, в поле URL укажите `http://prometheus:9090` (внутри сети Docker сервисы доступны по именам). Нажмите **Save & test**.
-3. Импортируйте дашборд: **Dashboards → New → Import** → загрузите `grafana-dashboard.json` из корня репозитория.
+Ручная настройка не требуется: при старте контейнера Grafana автоматически подхватывает provisioning из репозитория:
+
+- `grafana/provisioning/datasources/prometheus.yml` — источник данных Prometheus (`http://prometheus:9090`, внутри сети Docker сервисы доступны по именам) с фиксированным `uid: prometheus`;
+- `grafana/provisioning/dashboards/dashboards.yml` — провайдер дашбордов, который загружает `grafana/dashboards/grafana-dashboard.json`.
+
+Источник данных и дашборд появляются в UI (`http://localhost:3000`, `admin` / `admin`) сразу после `docker compose up -d`. Дашборд ссылается на источник данных по тому же `uid: prometheus`, поэтому ссылки не ломаются при пересоздании контейнера.
 
 ## API Endpoints
 

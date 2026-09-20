@@ -21,9 +21,7 @@ public static class DependencyInjection
             .Bind(configuration.GetRequiredSection(TokenSettingsConfiguration.SectionName));
         services.AddOptions<KafkaConfiguration>()
             .Bind(configuration.GetRequiredSection(KafkaConfiguration.SectionName));
-        services.AddOptions<OpenTelemetryConfiguration>()
-            .Bind(configuration.GetRequiredSection(OpenTelemetryConfiguration.SectionName));
-        
+
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddSingleton<IBookingProducer, BookingProducer>();
         services.AddHostedService<BookingEventsConsumerWorker>();

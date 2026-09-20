@@ -46,20 +46,19 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
-builder.Services.AddLogging(builder =>
-{
-    builder.AddConsole();
-    builder.SetMinimumLevel(LogLevel.Debug);
-});
-
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+var openTelemetryConfiguration = builder.Configuration
+                                     .GetSection(OpenTelemetryConfiguration.SectionName)
+                                     .Get<OpenTelemetryConfiguration>()
+                                 ?? new OpenTelemetryConfiguration();
 
 builder.AddOpenTelemetry()
     .ConfigureResource(r =>
         r.AddService(
-            serviceName: builder.Configuration.GetSection("OpenTelemetry").GetValue<string>("ServiceName"),
-            serviceVersion: builder.Configuration.GetSection("OpenTelemetry").GetValue<string>("Version")))
+            serviceName: openTelemetryConfiguration.ServiceName,
+            serviceVersion: openTelemetryConfiguration.Version))
     .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation(o =>
         {
@@ -73,9 +72,12 @@ builder.AddOpenTelemetry()
         .AddEntityFrameworkCoreInstrumentation()
         .AddOtlpExporter(o =>
             {
-                o.Endpoint =
-                    new Uri(builder.Configuration.GetSection("OpenTelemetry").GetValue<string>("OtlpEndpoint"));
-                o.Protocol = OtlpExportProtocol.Grpc;
+                o.Endpoint = new Uri(
+                    openTelemetryConfiguration.OtlpEndpoint ?? "http://localhost:4317");
+                o.Protocol = string.Equals(openTelemetryConfiguration.OtlpProtocol,
+                    "http/protobuf", StringComparison.OrdinalIgnoreCase)
+                    ? OtlpExportProtocol.HttpProtobuf
+                    : OtlpExportProtocol.Grpc;
                 o.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 2000;
                 o.BatchExportProcessorOptions.ExporterTimeoutMilliseconds = 3000;
             }

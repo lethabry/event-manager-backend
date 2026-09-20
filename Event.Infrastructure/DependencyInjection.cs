@@ -27,9 +27,7 @@ public static class DependencyInjection
             .Bind(configuration.GetRequiredSection(KafkaConfiguration.SectionName));
         services.AddOptions<EventCacheOptions>()
             .Bind(configuration.GetRequiredSection(EventCacheOptions.SectionName));
-        services.AddOptions<OpenTelemetryConfiguration>()
-            .Bind(configuration.GetRequiredSection(OpenTelemetryConfiguration.SectionName));
-        
+
         var redisSettings = configuration.GetRequiredSection(RedisConfiguration.SectionName).Get<RedisConfiguration>();
         var options = new ConfigurationOptions
         {

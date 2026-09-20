@@ -24,7 +24,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfyqftcszlxj4c"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -77,7 +77,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bfyqftcszlxj4c"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "100 * sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[$__rate_interval]))\r\n  / sum(rate(http_server_request_duration_seconds_count[$__rate_interval]))",
@@ -93,7 +93,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfyqftcszlxj4c"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -145,7 +145,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bfyqftcszlxj4c"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "process_runtime_dotnet_exceptions_count_total",
@@ -162,7 +162,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfyqftcszlxj4c"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -241,7 +241,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bfyqftcszlxj4c"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(0.50, sum(rate(http_server_request_duration_seconds_bucket[$__rate_interval])) by (le))",
@@ -254,7 +254,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bfyqftcszlxj4c"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket[$__rate_interval])) by (le)) ",
@@ -266,7 +266,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bfyqftcszlxj4c"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket[$__rate_interval])) by (le))",
@@ -283,7 +283,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfyqftcszlxj4c"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -362,7 +362,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bfyqftcszlxj4c"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "sum(rate(http_server_request_duration_seconds_count[$__rate_interval]))",
@@ -379,7 +379,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfyqftcszlxj4c"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -458,7 +458,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bfyqftcszlxj4c"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "http_server_active_requests",
@@ -474,7 +474,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "bfyqftcszlxj4c"
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -558,7 +558,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "bfyqftcszlxj4c"
+            "uid": "prometheus"
           },
           "editorMode": "code",
           "expr": "rate(http_server_request_duration_seconds_count[$__rate_interval])",
